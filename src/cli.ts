@@ -48,7 +48,6 @@ export default async function parseCli(argv?: string | readonly string[]) {
   `
 		)
 		.env('LP_')
-		.strict(process.env.NODE_ENV !== 'test')
 		.help()
 		.parse((argv as any) ?? hideBin(process.argv));
 	return {
