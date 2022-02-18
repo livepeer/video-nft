@@ -1,4 +1,4 @@
-import fs from 'fs';
+import * as fs from 'fs';
 import axios, { AxiosInstance } from 'axios';
 import { Asset, Task } from './types/schema';
 

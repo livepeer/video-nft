@@ -1,5 +1,5 @@
-import path from 'path';
-import yargs from 'yargs';
+import * as path from 'path';
+import * as yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 
 type Camel<T extends string> = T extends `${infer Left}-${infer Right}`
@@ -11,8 +11,7 @@ type CamelKeys<T> = {
 };
 
 export default async function parseCli(argv?: string | readonly string[]) {
-	const yargsInst = (await yargs()) as unknown as typeof yargs;
-	const parsedRaw = await yargsInst
+	const parsedRaw = await yargs
 		.options({
 			'api-token': {
 				describe: 'ttoken to use for Livepeer API',

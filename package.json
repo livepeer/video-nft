@@ -16,16 +16,18 @@
 	},
 	"homepage": "https://livepeer.com/dashboard/assets",
 	"license": "MIT",
-	"type": "module",
+	"type": "commonjs",
 	"main": "lib/index.js",
 	"bin": {
 		"video-nft": "lib/index.js"
 	},
 	"directories": {
-		"src:": "src"
+		"src:": "src",
+		"lib": "lib"
 	},
 	"files": [
-		"src"
+		"src",
+		"lib"
 	],
 	"repository": {
 		"type": "git",
