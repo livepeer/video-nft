@@ -1,4 +1,6 @@
 import * as path from 'path';
+import * as fs from 'fs';
+
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 
@@ -42,14 +44,27 @@ export default async function parseCli(argv?: string | readonly string[]) {
 		})
 		.usage(
 			`
-  Video NFT
+	Video NFT
 
   Mint a video NFT in 1 command with Livepeer.
-  `
+
+	Usage: video-nft <filename> [options]`
 		)
 		.env('LP_')
 		.help()
 		.parse((argv as any) ?? hideBin(process.argv));
+	if (!fs.existsSync(parsedRaw.filename)) {
+		throw new Error(`File ${parsedRaw.filename} does not exist`);
+	}
+	if (fs.existsSync(parsedRaw.nftMetadata)) {
+		parsedRaw.nftMetadata = fs.readFileSync(parsedRaw.nftMetadata, 'utf8');
+	}
+	try {
+		const metadata = JSON.parse(parsedRaw.nftMetadata);
+		console.log(`Using metadata:\n${JSON.stringify(metadata, null, 2)}`);
+	} catch (e) {
+		throw new Error(`Invalid JSON in nft-metadata: ${e}`);
+	}
 	return {
 		...(parsedRaw as CamelKeys<typeof parsedRaw>),
 		assetName: parsedRaw.assetName ?? path.basename(parsedRaw.filename)
