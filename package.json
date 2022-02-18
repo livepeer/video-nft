@@ -18,15 +18,15 @@
 	"license": "MIT",
 	"type": "commonjs",
 	"main": "lib/index.js",
-	"bin": {
-		"video-nft": "lib/index.js"
-	},
+	"bin": "bin/video-nft.js",
 	"directories": {
 		"src:": "src",
+		"bin:": "bin",
 		"lib": "lib"
 	},
 	"files": [
 		"src",
+		"bin",
 		"lib"
 	],
 	"repository": {
