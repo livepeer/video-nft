@@ -1,6 +1,6 @@
 {
 	"name": "@livepeer/video-nft",
-	"version": "0.0.2",
+	"version": "0.0.3",
 	"description": "1-command minting of video NFTs",
 	"keywords": [
 		"video",
@@ -18,7 +18,7 @@
 	"license": "MIT",
 	"type": "commonjs",
 	"main": "lib/index.js",
-	"bin": "bin/video-nft.js",
+	"bin": "bin/video-nft",
 	"directories": {
 		"src:": "src",
 		"bin:": "bin",
