@@ -30,31 +30,48 @@ export default class VodApi {
 	}
 
 	async getAsset(id: string) {
-		const { data } = await this.client.get<Task>(`/api/asset/${id}`);
-		return data;
+		return this.handleException(async () => {
+			const { data } = await this.client.get<Asset>(`/api/asset/${id}`);
+			return data;
+		});
 	}
 
 	async getTask(id: string) {
-		const { data } = await this.client.get<Task>(`/api/task/${id}`);
-		return data;
+		return this.handleException(async () => {
+			const { data } = await this.client.get<Task>(`/api/task/${id}`);
+			return data;
+		});
 	}
 
 	async requestUploadUrl(assetName: string) {
-		const { data } = await this.client.post('/api/asset/request-upload', {
-			name: assetName
+		return this.handleException(async () => {
+			const { data } = await this.client.post(
+				'/api/asset/request-upload',
+				{
+					name: assetName
+				}
+			);
+			return data as { url: string; asset: Asset; task: Task };
 		});
-		return data as { url: string; asset: Asset; task: Task };
 	}
 
 	async uploadFile(url: string, filename: string) {
-		return await this.client.put(url, fs.createReadStream(filename));
+		let file: fs.ReadStream | null = null;
+		try {
+			file = fs.createReadStream(filename);
+			await this.handleException(() => this.client.put(url, file));
+		} finally {
+			file?.close();
+		}
 	}
 
 	async exportAsset(id: string, nftMetadata: Object) {
-		const { data } = await this.client.post(`/api/asset/${id}/export`, {
-			ipfs: { nftMetadata }
+		return this.handleException(async () => {
+			const { data } = await this.client.post(`/api/asset/${id}/export`, {
+				ipfs: { nftMetadata }
+			});
+			return data as { task: Task };
 		});
-		return data as { task: Task };
 	}
 
 	// next level utilities
@@ -83,5 +100,23 @@ export default class VodApi {
 			);
 		}
 		return task;
+	}
+
+	private async handleException<T>(func: () => Promise<T>) {
+		try {
+			return await func();
+		} catch (err: any) {
+			if (err.response) {
+				const { status, statusText, data } = err.response;
+				throw new Error(
+					`Request upload (${
+						this.apiHost
+					}) failed (${status} ${statusText}): ${JSON.stringify(
+						data
+					)}`
+				);
+			}
+			throw err;
+		}
 	}
 }

@@ -40,6 +40,11 @@ export default async function parseCli(argv?: string | readonly string[]) {
 				describe: 'the endpoint to use for the Livepeer API',
 				type: 'string',
 				default: 'https://livepeer.com'
+			},
+			'mint-nft': {
+				describe: 'show link to experimental NFT minter at the end',
+				type: 'boolean',
+				default: false
 			}
 		})
 		.usage(
@@ -60,8 +65,12 @@ export default async function parseCli(argv?: string | readonly string[]) {
 		parsedRaw.nftMetadata = fs.readFileSync(parsedRaw.nftMetadata, 'utf8');
 	}
 	try {
-		const metadata = JSON.parse(parsedRaw.nftMetadata);
-		console.log(`Using metadata:\n${JSON.stringify(metadata, null, 2)}`);
+		if (parsedRaw.nftMetadata != '{}') {
+			const metadata = JSON.parse(parsedRaw.nftMetadata);
+			console.log(
+				`Using metadata:\n${JSON.stringify(metadata, null, 2)}`
+			);
+		}
 	} catch (e) {
 		throw new Error(`Invalid JSON in nft-metadata: ${e}`);
 	}

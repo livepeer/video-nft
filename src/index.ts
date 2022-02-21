@@ -25,13 +25,17 @@ async function videoNft() {
 	console.log(`Created export task with id=${exportTask.id}`);
 	exportTask = await api.waitTask(exportTask);
 
+	const result = exportTask.output?.export?.ipfs;
 	console.log(
-		`4. Export successful! Result: \n${JSON.stringify(
-			exportTask.output?.export?.ipfs,
-			null,
-			2
-		)}`
+		`4. Export successful! Result: \n${JSON.stringify(result, null, 2)}`
 	);
+
+	if (args.mintNft) {
+		console.log(
+			`5. Mint your NFT at:\n` +
+				`https://livepeer-com-git-vg-feateth-tx-page-livepeer.vercel.app/transact/eth?tokenUri=${result?.nftMetadataUrl}`
+		);
+	}
 }
 
 videoNft().catch(err => {
