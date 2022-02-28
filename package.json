@@ -37,7 +37,7 @@
 		"prepare": "tsc",
 		"start": "tsc && node lib/index.js",
 		"lint": "eslint . --ext .ts",
-		"format": "prettier --write \"./**/*.{js,json}\""
+		"format": "prettier --write \"./**/*.{ts,js,json}\""
 	},
 	"bugs": {
 		"url": "https://github.com/livepeer/livepeer-com/issues"

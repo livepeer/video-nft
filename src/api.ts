@@ -1,6 +1,6 @@
 import * as fs from 'fs';
-import axios, { AxiosInstance } from 'axios';
-import { Asset, Task } from './types/schema';
+import axios, { AxiosInstance, Method } from 'axios';
+import { Asset, Task, FfmpegProfile } from './types/schema';
 
 export default class VodApi {
 	private client: AxiosInstance;
@@ -30,48 +30,53 @@ export default class VodApi {
 	}
 
 	async getAsset(id: string) {
-		return this.handleException(async () => {
-			const { data } = await this.client.get<Asset>(`/api/asset/${id}`);
-			return data;
-		});
+		return this.makeRequest<Asset>('get', `/api/asset/${id}`);
 	}
 
 	async getTask(id: string) {
-		return this.handleException(async () => {
-			const { data } = await this.client.get<Task>(`/api/task/${id}`);
-			return data;
-		});
+		return this.makeRequest<Task>('get', `/api/task/${id}`);
 	}
 
 	async requestUploadUrl(assetName: string) {
-		return this.handleException(async () => {
-			const { data } = await this.client.post(
-				'/api/asset/request-upload',
-				{
-					name: assetName
-				}
-			);
-			return data as { url: string; asset: Asset; task: Task };
-		});
+		return this.makeRequest<{ url: string; asset: Asset; task: Task }>(
+			'post',
+			`/api/asset/request-upload`,
+			{
+				name: assetName
+			}
+		);
 	}
 
 	async uploadFile(url: string, filename: string) {
 		let file: fs.ReadStream | null = null;
 		try {
 			file = fs.createReadStream(filename);
-			await this.handleException(() => this.client.put(url, file));
+			await this.makeRequest('put', url, file);
 		} finally {
 			file?.close();
 		}
 	}
 
+	async transcodeAsset(src: Asset, profile: FfmpegProfile, name?: string) {
+		return this.makeRequest<{ asset: Asset; task: Task }>(
+			'post',
+			`/api/asset/transcode`,
+			{
+				assetId: src.id,
+				name: name ?? `${src.name} (${profile.name})`,
+				profile
+			}
+		);
+	}
+
 	async exportAsset(id: string, nftMetadata: Object) {
-		return this.handleException(async () => {
-			const { data } = await this.client.post(`/api/asset/${id}/export`, {
+		return this.makeRequest<{ task: Task }>(
+			'post',
+			`/api/asset/${id}/export`,
+			{
 				ipfs: { nftMetadata }
-			});
-			return data as { task: Task };
-		});
+			}
+		);
 	}
 
 	// next level utilities
@@ -102,21 +107,24 @@ export default class VodApi {
 		return task;
 	}
 
-	private async handleException<T>(func: () => Promise<T>) {
+	private async makeRequest<T>(method: Method, path: string, data?: any) {
 		try {
-			return await func();
+			const res = await this.client.request({ method, url: path, data });
+			res.request;
+			return res.data as T;
 		} catch (err: any) {
-			if (err.response) {
-				const { status, statusText, data } = err.response;
-				throw new Error(
-					`Request upload (${
-						this.apiHost
-					}) failed (${status} ${statusText}): ${JSON.stringify(
-						data
-					)}`
-				);
+			if (!axios.isAxiosError(err) || !err.response) {
+				throw err;
 			}
-			throw err;
+			const { status, statusText, data } = err.response;
+			let msg = JSON.stringify(data);
+			if (Array.isArray(data.errors) && data.errors.length > 0) {
+				msg = data.errors[0];
+			}
+
+			throw new Error(
+				`Request to ${path} failed (${status} ${statusText}): ${msg}`
+			);
 		}
 	}
 }
