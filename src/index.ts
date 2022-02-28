@@ -22,9 +22,9 @@ async function videoNft() {
 	const desiredProfile = getDesiredProfile(asset);
 	if (desiredProfile) {
 		console.log(
-			`3. Transcoding asset to ${desiredProfile.width} x ${
-				desiredProfile.height
-			} @ ${Math.round(desiredProfile.bitrate / 1024)} kbps bitrate`
+			`3. File is too big for OpenSea 100MB limit (http://bit.ly/opensea-file-limit). Transcoding asset to ${
+				desiredProfile.name
+			} ${Math.round(desiredProfile.bitrate / 1024)} kbps bitrate`
 		);
 		const transcode = await api.transcodeAsset(asset, desiredProfile);
 		await api.waitTask(transcode.task);
