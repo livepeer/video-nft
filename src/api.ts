@@ -2,15 +2,17 @@ import * as fs from 'fs';
 import axios, { AxiosInstance, Method } from 'axios';
 import { Asset, Task, FfmpegProfile } from './types/schema';
 
+export const prodApiEndpoint = 'https://livepeer.com';
+
 export default class VodApi {
 	private client: AxiosInstance;
 
 	constructor(
-		private readonly apiHost: string,
-		private readonly apiToken: string
+		readonly apiToken: string,
+		readonly apiEndpoint: string = prodApiEndpoint
 	) {
 		this.client = axios.create({
-			baseURL: apiHost,
+			baseURL: apiEndpoint,
 			headers: {
 				Authorization: `Bearer ${apiToken}`
 			},

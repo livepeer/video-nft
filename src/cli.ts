@@ -4,6 +4,8 @@ import * as fs from 'fs';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 
+import { prodApiEndpoint } from './api';
+
 type Camel<T extends string> = T extends `${infer Left}-${infer Right}`
 	? Camel<`${Left}${Capitalize<Right>}`>
 	: T;
@@ -36,10 +38,10 @@ export default async function parseCli(argv?: string | readonly string[]) {
 				type: 'string',
 				default: '{}'
 			},
-			'api-host': {
+			'api-endpoint': {
 				describe: 'the endpoint to use for the Livepeer API',
 				type: 'string',
-				default: 'https://livepeer.com'
+				default: prodApiEndpoint
 			},
 			'mint-nft': {
 				describe: 'show link to experimental NFT minter at the end',
