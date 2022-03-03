@@ -1,10 +1,13 @@
+import inquirer from 'inquirer';
 import { Asset, FfmpegProfile } from './types/schema';
 
 const openSeaNftSizeLimit = 100_000_000; // 100 MB
 const min720pBitrate = 500_000; // 0.5 Mbps
 const minBitrate = 100_000; // 0.1 Mbps
 
-export function getDesiredProfile(asset: Asset): FfmpegProfile | null {
+export async function getDesiredProfile(
+	asset: Asset
+): Promise<FfmpegProfile | null> {
 	const size = asset.size ?? 0;
 	const videoTrack = asset.videoSpec?.tracks?.find(t => t.type === 'video');
 	const { bitrate, width, height } = videoTrack ?? {};
@@ -25,6 +28,29 @@ export function getDesiredProfile(asset: Asset): FfmpegProfile | null {
 		);
 		return null;
 	}
+
+	console.log(
+		`File is too big for OpenSea 100MB limit (learn more at http://bit.ly/opensea-file-limit).`
+	);
+	const { action } = await inquirer.prompt({
+		type: 'list',
+		name: 'action',
+		message: 'What do you want to do?',
+		choices: [
+			{
+				value: 'transcode',
+				name: 'Transcode it to a lower quality so OpenSea is able to preview'
+			},
+			{
+				value: 'ignore',
+				name: 'Mint it as is (should work in any other platform that uses the NFT file)'
+			}
+		]
+	});
+	if (action === 'ignore') {
+		return null;
+	}
+
 	// We only change the resolution if the bitrate changes too much. We don't go
 	// below 720p though since the bitrate is the thing that really matters. We
 	// don't need to handle aspect ratio since go-livepeer will do it for us.

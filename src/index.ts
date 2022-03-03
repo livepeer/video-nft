@@ -9,22 +9,22 @@ async function videoNft() {
 	console.log('1. Requesting upload URL... ');
 	const {
 		url: uploadUrl,
-		asset: pendingAsset,
+		asset: { id: assetId },
 		task: importTask
 	} = await api.requestUploadUrl(args.assetName);
-	console.log(`Pending asset with id=${pendingAsset.id}`);
+	console.log(`Pending asset with id=${assetId}`);
 
 	console.log('2. Uploading file...');
 	await api.uploadFile(uploadUrl, args.filename as string);
 	await api.waitTask(importTask);
 
-	let asset = await api.getAsset(pendingAsset.id ?? '');
-	const desiredProfile = getDesiredProfile(asset);
+	let asset = await api.getAsset(assetId ?? '');
+	const desiredProfile = await getDesiredProfile(asset);
 	if (desiredProfile) {
 		console.log(
-			`3. File is too big for OpenSea 100MB limit (http://bit.ly/opensea-file-limit). Transcoding asset to ${
-				desiredProfile.name
-			} ${Math.round(desiredProfile.bitrate / 1024)} kbps bitrate`
+			`3. Transcoding asset to ${desiredProfile.name} at ${Math.round(
+				desiredProfile.bitrate / 1024
+			)} kbps bitrate`
 		);
 		const transcode = await api.transcodeAsset(asset, desiredProfile);
 		await api.waitTask(transcode.task);
