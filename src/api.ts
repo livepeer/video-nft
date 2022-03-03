@@ -7,14 +7,11 @@ export const prodApiEndpoint = 'https://livepeer.com';
 export default class VodApi {
 	private client: AxiosInstance;
 
-	constructor(
-		readonly apiToken: string,
-		readonly apiEndpoint: string = prodApiEndpoint
-	) {
+	constructor(apiKey: string, apiEndpoint: string = prodApiEndpoint) {
 		this.client = axios.create({
 			baseURL: apiEndpoint,
 			headers: {
-				Authorization: `Bearer ${apiToken}`
+				Authorization: `Bearer ${apiKey}`
 			},
 			maxContentLength: Infinity,
 			maxBodyLength: Infinity

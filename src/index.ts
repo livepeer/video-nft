@@ -4,7 +4,7 @@ import { getDesiredProfile } from './transcode';
 
 async function videoNft() {
 	const args = await parseCli();
-	const api = new VodApi(args.apiToken, args.apiEndpoint);
+	const api = new VodApi(args.apiKey, args.apiEndpoint);
 
 	console.log('1. Requesting upload URL... ');
 	const {

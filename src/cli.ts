@@ -1,6 +1,7 @@
 import * as path from 'path';
 import * as fs from 'fs';
 
+import inquirer from 'inquirer';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 
@@ -14,18 +15,24 @@ type CamelKeys<T> = {
 	[K in keyof T as K extends string ? Camel<K> : K]: T[K];
 };
 
-export default async function parseCli(argv?: string | readonly string[]) {
-	const parsedRaw = await yargs
-		.command('$0 <filename>', '1-command mint a video NFT')
+type UnboxPromise<T> = T extends Promise<infer U> ? U : never;
+
+type RawArgs = UnboxPromise<ReturnType<typeof parseRawArgs>>;
+
+export type CliArgs = CamelKeys<{
+	[K in keyof RawArgs]: Exclude<RawArgs[K], undefined>;
+}>;
+
+function parseRawArgs(argv?: string | readonly string[]) {
+	return yargs
+		.command('$0 [filename]', '1-command mint a video NFT')
 		.positional('filename', {
 			describe: 'file to upload as an NFT',
-			demandOption: true,
 			type: 'string'
 		})
 		.options({
-			'api-token': {
-				describe: 'ttoken to use for Livepeer API',
-				demandOption: true,
+			'api-key': {
+				describe: 'API key to use for Livepeer API',
 				type: 'string'
 			},
 			'asset-name': {
@@ -55,20 +62,79 @@ export default async function parseCli(argv?: string | readonly string[]) {
 
   Mint a video NFT in 1 command with Livepeer.
 
-	Usage: video-nft <filename> [options]`
+	Usage: video-nft [filename] [options]`
 		)
 		.env('LP_')
 		.help()
 		.parse((argv as any) ?? hideBin(process.argv));
-	if (!fs.existsSync(parsedRaw.filename)) {
-		throw new Error(`File ${parsedRaw.filename} does not exist`);
+}
+
+const uuidRegex =
+	/^[0-9a-f]{8}\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\b[0-9a-f]{12}$/;
+
+async function promptMissing(args: RawArgs): Promise<CliArgs> {
+	let { apiKey, filename, assetName } = args as Record<string, string>;
+	if (!apiKey) {
+		apiKey = await inquirer
+			.prompt({
+				type: 'password',
+				name: 'apiKey',
+				message:
+					'Enter your Livepeer API key (learn more at http://bit.ly/lp-api-key):',
+				mask: '*',
+				validate: apiKey =>
+					uuidRegex.test(apiKey) || 'Not a valid API key'
+			})
+			.then(ans => ans.apiKey as string);
+		console.log(
+			'Tip: You can set the LP_API_KEY environment variable to avoid this prompt.'
+		);
 	}
-	if (fs.existsSync(parsedRaw.nftMetadata)) {
-		parsedRaw.nftMetadata = fs.readFileSync(parsedRaw.nftMetadata, 'utf8');
+	if (!filename) {
+		filename = await inquirer
+			.prompt({
+				type: 'input',
+				name: 'filename',
+				message: 'What file do you want to use?',
+				validate: (value: string) =>
+					fs.existsSync(value) || 'File does not exist'
+			})
+			.then(ans => ans.filename);
+		console.log(
+			'You can also send the filename as an argument to this command.'
+		);
+	}
+	if (!assetName) {
+		assetName = await inquirer
+			.prompt({
+				type: 'input',
+				name: 'assetName',
+				message: `What name do you want to give to your NFT?`,
+				default: path.basename(filename)
+			})
+			.then(ans => ans.assetName);
+	}
+	return {
+		...args,
+		apiKey,
+		filename,
+		assetName
+	};
+}
+
+export default async function parseCli(
+	argv?: string | readonly string[]
+): Promise<CliArgs> {
+	const args = await parseRawArgs(argv);
+	if (args.filename && !fs.existsSync(args.filename)) {
+		throw new Error(`File ${args.filename} does not exist`);
+	}
+	if (fs.existsSync(args.nftMetadata)) {
+		args.nftMetadata = fs.readFileSync(args.nftMetadata, 'utf8');
 	}
 	try {
-		if (parsedRaw.nftMetadata != '{}') {
-			const metadata = JSON.parse(parsedRaw.nftMetadata);
+		if (args.nftMetadata != '{}') {
+			const metadata = JSON.parse(args.nftMetadata);
 			console.log(
 				`Using metadata:\n${JSON.stringify(metadata, null, 2)}`
 			);
@@ -76,8 +142,5 @@ export default async function parseCli(argv?: string | readonly string[]) {
 	} catch (e) {
 		throw new Error(`Invalid JSON in nft-metadata: ${e}`);
 	}
-	return {
-		...(parsedRaw as CamelKeys<typeof parsedRaw>),
-		assetName: parsedRaw.assetName ?? path.basename(parsedRaw.filename)
-	};
+	return promptMissing(args);
 }
