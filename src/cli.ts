@@ -49,11 +49,6 @@ function parseRawArgs(argv?: string | readonly string[]) {
 				describe: 'the endpoint to use for the Livepeer API',
 				type: 'string',
 				default: prodApiEndpoint
-			},
-			'mint-nft': {
-				describe: 'show link to experimental NFT minter at the end',
-				type: 'boolean',
-				default: false
 			}
 		})
 		.usage(

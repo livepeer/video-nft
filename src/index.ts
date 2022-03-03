@@ -44,12 +44,10 @@ async function videoNft() {
 		`4. Export successful! Result: \n${JSON.stringify(result, null, 2)}`
 	);
 
-	if (args.mintNft) {
-		console.log(
-			`5. Mint your NFT at:\n` +
-				`https://livepeer-com-git-vg-feateth-tx-page-livepeer.vercel.app/transact/eth?tokenUri=${result?.nftMetadataUrl}`
-		);
-	}
+	console.log(
+		`5. Mint your NFT at:\n` +
+			`https://livepeer-com-git-vg-feateth-tx-page-livepeer.vercel.app/transact/eth?tokenUri=${result?.nftMetadataUrl}`
+	);
 }
 
 videoNft().catch(err => {
