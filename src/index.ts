@@ -46,7 +46,7 @@ async function videoNft() {
 
 	console.log(
 		`5. Mint your NFT at:\n` +
-			`https://livepeer-com-git-vg-feateth-tx-page-livepeer.vercel.app/transact/eth?tokenUri=${result?.nftMetadataUrl}`
+			`https://livepeer.com/mint-nft?tokenUri=${result?.nftMetadataUrl}`
 	);
 }
 
