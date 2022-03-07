@@ -68,7 +68,10 @@ const uuidRegex =
 	/^[0-9a-f]{8}\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\b[0-9a-f]{12}$/;
 
 async function promptMissing(args: RawArgs): Promise<CliArgs> {
-	let { apiKey, filename, assetName } = args as Record<string, string>;
+	let { apiKey, filename, assetName, nftMetadata } = args as Record<
+		string,
+		string
+	>;
 	if (!apiKey) {
 		apiKey = await inquirer
 			.prompt({
@@ -109,11 +112,53 @@ async function promptMissing(args: RawArgs): Promise<CliArgs> {
 			})
 			.then(ans => ans.assetName);
 	}
+	if (nftMetadata === '{}') {
+		const { shouldEdit } = await inquirer.prompt({
+			type: 'confirm',
+			name: 'shouldEdit',
+			message: `Would you like to customize the NFT metadata?`,
+			default: false
+		});
+		if (shouldEdit) {
+			console.log(
+				' - The `animation_url` and `properties.video` fields will be populated with the exported video URL.'
+			);
+			console.log(' - Set any field to `null` to delete it.');
+			nftMetadata = await inquirer
+				.prompt({
+					type: 'editor',
+					name: 'nftMetadata',
+					message: 'Open text editor:',
+					default: JSON.stringify(
+						{
+							name: assetName,
+							description: `Livepeer video from asset ${JSON.stringify(
+								assetName
+							)}`,
+							image: `ipfs://bafkreidmlgpjoxgvefhid2xjyqjnpmjjmq47yyrcm6ifvoovclty7sm4wm`,
+							properties: {}
+						},
+						null,
+						2
+					),
+					validate: (value: string) => {
+						try {
+							JSON.parse(value);
+							return true;
+						} catch (e) {
+							return `Invalid JSON: ${e}`;
+						}
+					}
+				})
+				.then(ans => ans.nftMetadata);
+		}
+	}
 	return {
 		...args,
 		apiKey,
 		filename,
-		assetName
+		assetName,
+		nftMetadata
 	};
 }
 
