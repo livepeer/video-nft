@@ -1,56 +1,55 @@
 import VodApi from './api';
-import parseCli from './cli';
-import { getDesiredProfile } from './transcode';
+import { fileOpen } from 'browser-fs-access';
+import { getDesiredBitrate, makeProfile } from './transcode';
 
-async function videoNft() {
-	const args = await parseCli();
-	const api = new VodApi(args.apiKey, args.apiEndpoint);
+export class VideoNFT {
+	private api: VodApi;
 
-	console.log('1. Requesting upload URL... ');
-	const {
-		url: uploadUrl,
-		asset: { id: assetId },
-		task: importTask
-	} = await api.requestUploadUrl(args.assetName);
-	console.log(`Pending asset with id=${assetId}`);
-
-	console.log('2. Uploading file...');
-	await api.uploadFile(uploadUrl, args.filename as string);
-	await api.waitTask(importTask);
-
-	let asset = await api.getAsset(assetId ?? '');
-	const desiredProfile = await getDesiredProfile(asset);
-	if (desiredProfile) {
-		console.log(
-			`3. Transcoding asset to ${desiredProfile.name} at ${Math.round(
-				desiredProfile.bitrate / 1024
-			)} kbps bitrate`
-		);
-		const transcode = await api.transcodeAsset(asset, desiredProfile);
-		await api.waitTask(transcode.task);
-		asset = transcode.asset;
+	constructor(apiKey: string, apiEndpoint?: string) {
+		this.api = new VodApi(apiKey, apiEndpoint);
 	}
 
-	console.log('3. Starting export... ');
-	let { task: exportTask } = await api.exportAsset(
-		asset.id ?? '',
-		JSON.parse(args.nftMetadata)
-	);
-	console.log(`Created export task with id=${exportTask.id}`);
-	exportTask = await api.waitTask(exportTask);
+	async mintNft(args: {
+		assetName: string;
+		filename: string;
+		nftMetadata: string;
+	}) {
+		const { handle } = await fileOpen({
+			description: 'MP4 Video files',
+			mimeTypes: ['video/mp4'],
+			extensions: ['mp4', 'mov', 'm4v']
+		});
 
-	const result = exportTask.output?.export?.ipfs;
-	console.log(
-		`4. Export successful! Result: \n${JSON.stringify(result, null, 2)}`
-	);
+		const {
+			url: uploadUrl,
+			asset: { id: assetId },
+			task: importTask
+		} = await this.api.requestUploadUrl(args.assetName);
 
-	console.log(
-		`5. Mint your NFT at:\n` +
-			`https://livepeer.com/mint-nft?tokenUri=${result?.nftMetadataUrl}`
-	);
+		const file = await handle?.getFile();
+		if (!file) {
+			throw new Error('Failed to open file');
+		}
+		await this.api.uploadFile(uploadUrl, file.stream());
+		await this.api.waitTask(importTask);
+
+		let asset = await this.api.getAsset(assetId ?? '');
+		const desiredBitrate = await getDesiredBitrate(asset).catch(() => null);
+		if (desiredBitrate) {
+			const transcode = await this.api.transcodeAsset(
+				asset,
+				makeProfile(asset, desiredBitrate)
+			);
+			await this.api.waitTask(transcode.task);
+			asset = transcode.asset;
+		}
+
+		let { task: exportTask } = await this.api.exportAsset(
+			asset.id ?? '',
+			JSON.parse(args.nftMetadata)
+		);
+		exportTask = await this.api.waitTask(exportTask);
+
+		return exportTask.output?.export;
+	}
 }
-
-videoNft().catch(err => {
-	console.error(err);
-	process.exit(1);
-});

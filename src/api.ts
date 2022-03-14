@@ -10,9 +10,7 @@ export default class VodApi {
 	constructor(apiKey: string, apiEndpoint: string = prodApiEndpoint) {
 		this.client = axios.create({
 			baseURL: apiEndpoint,
-			headers: {
-				Authorization: `Bearer ${apiKey}`
-			},
+			headers: !apiKey ? {} : { Authorization: `Bearer ${apiKey}` },
 			maxContentLength: Infinity,
 			maxBodyLength: Infinity
 		});
@@ -46,14 +44,8 @@ export default class VodApi {
 		);
 	}
 
-	async uploadFile(url: string, filename: string) {
-		let file: fs.ReadStream | null = null;
-		try {
-			file = fs.createReadStream(filename);
-			await this.makeRequest('put', url, file);
-		} finally {
-			file?.close();
-		}
+	uploadFile(url: string, contents: NodeJS.ReadableStream) {
+		return this.makeRequest('put', url, contents);
 	}
 
 	async transcodeAsset(src: Asset, profile: FfmpegProfile, name?: string) {

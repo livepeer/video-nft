@@ -35,7 +35,7 @@
 	},
 	"scripts": {
 		"prepare": "tsc",
-		"start": "tsc && node lib/index.js",
+		"start": "tsc && node lib/cli.js",
 		"lint": "eslint . --ext .ts",
 		"format": "prettier --write \"./**/*.{ts,js,json}\""
 	},
@@ -44,6 +44,7 @@
 	},
 	"dependencies": {
 		"axios": "^0.26.0",
+		"browser-fs-access": "^0.25.0",
 		"chalk": "^5.0.0",
 		"cli-alerts": "^1.2.2",
 		"cli-handle-error": "^4.4.0",
