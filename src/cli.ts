@@ -9,7 +9,7 @@ async function videoNft() {
 	const args = await parseCli();
 	const api = new VodApi(args.apiKey, args.apiEndpoint);
 
-	console.log('1. Requesting upload URL... ');
+	printStep('Requesting upload URL...');
 	const {
 		url: uploadUrl,
 		asset: { id: assetId },
@@ -17,7 +17,7 @@ async function videoNft() {
 	} = await api.requestUploadUrl(args.assetName);
 	console.log(`Pending asset with id=${assetId}`);
 
-	console.log('2. Uploading file...');
+	printStep('Uploading file...');
 	let file: fs.ReadStream | null = null;
 	try {
 		file = fs.createReadStream(args.filename);
@@ -30,7 +30,7 @@ async function videoNft() {
 	let asset = await api.getAsset(assetId ?? '');
 	asset = await maybeTranscode(api, asset);
 
-	console.log('3. Starting export... ');
+	printStep('Starting export...');
 	let { task: exportTask } = await api.exportAsset(
 		asset.id ?? '',
 		JSON.parse(args.nftMetadata)
@@ -39,12 +39,12 @@ async function videoNft() {
 	exportTask = await api.waitTask(exportTask);
 
 	const result = exportTask.output?.export?.ipfs;
-	console.log(
-		`4. Export successful! Result: \n${JSON.stringify(result, null, 2)}`
+	printStep(
+		`Export successful! Result: \n${JSON.stringify(result, null, 2)}`
 	);
 
-	console.log(
-		`5. Mint your NFT at:\n` +
+	printStep(
+		`Mint your NFT at:\n` +
 			`https://livepeer.com/mint-nft?tokenUri=${result?.nftMetadataUrl}`
 	);
 }
@@ -84,8 +84,8 @@ async function maybeTranscode(api: VodApi, asset: Asset) {
 		return asset;
 	}
 	const desiredProfile = makeProfile(asset, desiredBitrate);
-	console.log(
-		`3. Transcoding asset to ${desiredProfile.name} at ${Math.round(
+	printStep(
+		`Transcoding asset to ${desiredProfile.name} at ${Math.round(
 			desiredProfile.bitrate / 1024
 		)} kbps bitrate`
 	);
@@ -93,6 +93,9 @@ async function maybeTranscode(api: VodApi, asset: Asset) {
 	await api.waitTask(transcode.task);
 	return transcode.asset;
 }
+
+let currStep = 0;
+const printStep = (msg: string) => console.log(`${++currStep}. ${msg}`);
 
 videoNft().catch(err => {
 	console.error(err);
