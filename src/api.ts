@@ -72,10 +72,7 @@ export default class VodApi {
 
 	// next level utilities
 
-	async waitTask(task: Task) {
-		console.log(
-			`Waiting for ${task.type} task completion... id=${task.id}`
-		);
+	async waitTask(task: Task, reportProgress?: (progress: number) => void) {
 		let lastProgress = 0;
 		while (
 			task.status?.phase !== 'completed' &&
@@ -83,7 +80,7 @@ export default class VodApi {
 		) {
 			const progress = task.status?.progress;
 			if (progress && progress !== lastProgress) {
-				console.log(` - progress: ${100 * progress}%`);
+				if (reportProgress) reportProgress(progress);
 				lastProgress = progress;
 			}
 			new Promise(resolve => setTimeout(resolve, 1000));

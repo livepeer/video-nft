@@ -3,7 +3,7 @@ import parseCli from './cli-args';
 import { getDesiredBitrate, makeProfile } from './transcode';
 import fs from 'fs';
 import inquirer from 'inquirer';
-import { Asset } from './types/schema';
+import { Asset, Task } from './types/schema';
 
 async function videoNft() {
 	const args = await parseCli();
@@ -25,7 +25,7 @@ async function videoNft() {
 	} finally {
 		file?.close();
 	}
-	await api.waitTask(importTask);
+	await waitTask(api, importTask);
 
 	let asset = await api.getAsset(assetId ?? '');
 	asset = await maybeTranscode(api, asset);
@@ -36,7 +36,7 @@ async function videoNft() {
 		JSON.parse(args.nftMetadata)
 	);
 	console.log(`Created export task with id=${exportTask.id}`);
-	exportTask = await api.waitTask(exportTask);
+	exportTask = await waitTask(api, exportTask);
 
 	const result = exportTask.output?.export?.ipfs;
 	printStep(
@@ -47,6 +47,11 @@ async function videoNft() {
 		`Mint your NFT at:\n` +
 			`https://livepeer.com/mint-nft?tokenUri=${result?.nftMetadataUrl}`
 	);
+}
+
+function waitTask(api: VodApi, task: Task) {
+	console.log(`Waiting for ${task.type} task completion... id=${task.id}`);
+	return api.waitTask(task, p => console.log(` - progress: ${100 * p}%`));
 }
 
 async function maybeTranscode(api: VodApi, asset: Asset) {
@@ -90,7 +95,7 @@ async function maybeTranscode(api: VodApi, asset: Asset) {
 		)} kbps bitrate`
 	);
 	const transcode = await api.transcodeAsset(asset, desiredProfile);
-	await api.waitTask(transcode.task);
+	waitTask(api, transcode.task);
 	return transcode.asset;
 }
 
