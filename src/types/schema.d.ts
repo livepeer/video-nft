@@ -675,7 +675,7 @@ export interface MultistreamTarget {
  */
 
 export interface Asset {
-	id?: string;
+	id: string;
 	/**
 	 * Type of the asset.
 	 */
@@ -892,7 +892,7 @@ export interface Task {
 	/**
 	 * Task ID
 	 */
-	id?: string;
+	id: string;
 	/**
 	 * User ID of the task owner
 	 */
@@ -1040,16 +1040,6 @@ export interface Task {
 		 * Output of the export task
 		 */
 		export?: {
-			/**
-			 * Internal data of the export task that should not be returned
-			 * to users. Contains internal tracking information like which
-			 * service was used for the export in case it is maintained by
-			 * us (e.g. the first-party piñata service).
-			 *
-			 */
-			internal?: {
-				[k: string]: unknown;
-			};
 			ipfs?: {
 				/**
 				 * IPFS CID of the exported video file

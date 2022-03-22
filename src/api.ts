@@ -4,6 +4,8 @@ import { Asset, Task, FfmpegProfile } from './types/schema';
 
 export const prodApiEndpoint = 'https://livepeer.com';
 
+type ExportTaskParams = NonNullable<Task['params']>['export'];
+
 export default class VodApi {
 	private client: AxiosInstance;
 
@@ -60,13 +62,11 @@ export default class VodApi {
 		);
 	}
 
-	async exportAsset(id: string, nftMetadata: Object) {
+	async exportAsset(id: string, params: ExportTaskParams) {
 		return this.makeRequest<{ task: Task }>(
 			'post',
 			`/api/asset/${id}/export`,
-			{
-				ipfs: { nftMetadata }
-			}
+			params
 		);
 	}
 

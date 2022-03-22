@@ -55,14 +55,16 @@ function waitTask(api: VodApi, task: Task) {
 }
 
 async function maybeTranscode(api: VodApi, asset: Asset) {
-	const desiredBitrate = await getDesiredBitrate(asset).catch(() => {
-		console.error(
-			`Warning: Asset is larger than OpenSea file limit and can't be transcoded down since it's too large. ` +
-				`It will still be stored in IPFS and referenced in the NFT metadata, so a proper application is still able to play it back. ` +
-				`For more information check http://bit.ly/opensea-file-limit`
-		);
-		return null;
-	});
+	const desiredBitrate = await Promise.resolve()
+		.then(() => getDesiredBitrate(asset))
+		.catch(() => {
+			console.error(
+				`Warning: Asset is larger than OpenSea file limit and can't be transcoded down since it's too large. ` +
+					`It will still be stored in IPFS and referenced in the NFT metadata, so a proper application is still able to play it back. ` +
+					`For more information check http://bit.ly/opensea-file-limit`
+			);
+			return null;
+		});
 	if (!desiredBitrate) {
 		return asset;
 	}

@@ -4,10 +4,10 @@ const openSeaNftSizeLimit = 100_000_000; // 100 MB
 const min720pBitrate = 500_000; // 0.5 Mbps
 const minBitrate = 100_000; // 0.1 Mbps
 
-export async function getDesiredBitrate(
+export function getDesiredBitrate(
 	asset: Asset,
 	sizeLimit: number = openSeaNftSizeLimit
-): Promise<number | null> {
+): number | null {
 	const size = asset.size ?? 0;
 	const bitrate = getVideoTrack(asset)?.bitrate ?? 0;
 	if (size <= sizeLimit || !bitrate) {
