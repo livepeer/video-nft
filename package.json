@@ -51,6 +51,7 @@
 		"cli-handle-unhandled": "^1.1.1",
 		"cli-meow-help": "^2.0.2",
 		"cli-welcome": "^2.2.2",
+		"ethers": "^5.6.1",
 		"inquirer": "^8.2.0",
 		"meow": "^10.1.2",
 		"yargs": "^17.3.1"
