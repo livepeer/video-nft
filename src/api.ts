@@ -1,4 +1,3 @@
-import * as fs from 'fs';
 import axios, { AxiosInstance, Method } from 'axios';
 import { Asset, Task, FfmpegProfile } from './types/schema';
 
@@ -6,13 +5,20 @@ export const prodApiEndpoint = 'https://livepeer.com';
 
 type ExportTaskParams = NonNullable<Task['params']>['export'];
 
+export type ApiAuthorization = { apiKey: string } | { jwt: string };
+
 export default class VodApi {
 	private client: AxiosInstance;
 
-	constructor(apiKey: string, apiEndpoint: string = prodApiEndpoint) {
+	constructor(auth: ApiAuthorization, apiEndpoint: string = prodApiEndpoint) {
 		this.client = axios.create({
 			baseURL: apiEndpoint,
-			headers: !apiKey ? {} : { Authorization: `Bearer ${apiKey}` },
+			headers:
+				'apiKey' in auth
+					? { Authorization: `Bearer ${auth.apiKey}` }
+					: 'jwt' in auth
+					? { Authorization: `JWT ${auth.jwt}` }
+					: {},
 			maxContentLength: Infinity,
 			maxBodyLength: Infinity
 		});

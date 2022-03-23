@@ -1,6 +1,6 @@
 import { ethers } from 'ethers';
 
-import VodApi from './api';
+import VodApi, { ApiAuthorization } from './api';
 import { fileOpen } from 'browser-fs-access';
 import { getDesiredBitrate, makeProfile } from './transcode';
 import { Asset } from './types/schema';
@@ -10,7 +10,7 @@ type EthereumOrProvider =
 	| ethers.providers.JsonRpcFetchFunc
 	| ethers.providers.JsonRpcProvider;
 
-const asProvider = (ethOrPrv: EthereumOrProvider) =>
+const asJsonRpcProvider = (ethOrPrv: EthereumOrProvider) =>
 	ethOrPrv instanceof ethers.providers.JsonRpcProvider
 		? ethOrPrv
 		: new ethers.providers.Web3Provider(ethOrPrv);
@@ -21,10 +21,16 @@ const videoNftAbi = [
 ];
 
 export class VideoNFT {
+	private ethProvider: ethers.providers.JsonRpcProvider;
 	private api: VodApi;
 
-	constructor(apiKey: string, apiEndpoint?: string) {
-		this.api = new VodApi(apiKey, apiEndpoint);
+	constructor(
+		ethereumOrProvider: EthereumOrProvider,
+		auth: ApiAuthorization,
+		apiEndpoint?: string
+	) {
+		this.ethProvider = asJsonRpcProvider(ethereumOrProvider);
+		this.api = new VodApi(auth, apiEndpoint);
 	}
 
 	async createNft(args: {
@@ -32,7 +38,6 @@ export class VideoNFT {
 		skipNormalize: boolean;
 		nftMetadata: string;
 		mint: {
-			ethereumOrProvider: EthereumOrProvider;
 			contractAddress: string;
 			to?: string;
 		};
@@ -43,14 +48,13 @@ export class VideoNFT {
 			asset = await this.nftNormalize(asset);
 		}
 		const ipfsInfo = await this.exportToIPFS(asset.id, args.nftMetadata);
-		if (!args.mint) {
+		if (!args.mint || !this.ethProvider) {
 			return null;
 		}
 		const {
-			mint: { ethereumOrProvider, contractAddress, to }
+			mint: { contractAddress, to }
 		} = args;
 		const tx = await this.mintNft(
-			ethereumOrProvider,
 			contractAddress,
 			ipfsInfo?.nftMetadataUrl ?? '',
 			to
@@ -133,13 +137,11 @@ export class VideoNFT {
 	}
 
 	async mintNft(
-		ethereumOrProvider: EthereumOrProvider,
 		contractAddress: string,
 		tokenUri: string,
 		to?: string
 	): Promise<ethers.ContractTransaction> {
-		const provider = asProvider(ethereumOrProvider);
-		const signer = provider.getSigner();
+		const signer = this.ethProvider.getSigner();
 		const videoNft = new ethers.Contract(
 			contractAddress,
 			videoNftAbi,

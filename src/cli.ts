@@ -7,7 +7,7 @@ import { Asset, Task } from './types/schema';
 
 async function videoNft() {
 	const args = await parseCli();
-	const api = new VodApi(args.apiKey, args.apiEndpoint);
+	const api = new VodApi({ apiKey: args.apiKey }, args.apiEndpoint);
 
 	printStep('Requesting upload URL...');
 	const {
