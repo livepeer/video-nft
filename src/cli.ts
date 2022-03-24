@@ -31,10 +31,9 @@ async function videoNft() {
 	asset = await maybeTranscode(api, asset);
 
 	printStep('Starting export...');
-	let { task: exportTask } = await api.exportAsset(
-		asset.id ?? '',
-		JSON.parse(args.nftMetadata)
-	);
+	let { task: exportTask } = await api.exportAsset(asset.id ?? '', {
+		ipfs: { nftMetadata: JSON.parse(args.nftMetadata) }
+	});
 	console.log(`Created export task with id=${exportTask.id}`);
 	exportTask = await waitTask(api, exportTask);
 
@@ -96,9 +95,9 @@ async function maybeTranscode(api: VodApi, asset: Asset) {
 			desiredProfile.bitrate / 1024
 		)} kbps bitrate`
 	);
-	const transcode = await api.transcodeAsset(asset, desiredProfile);
-	waitTask(api, transcode.task);
-	return transcode.asset;
+	let transcode = await api.transcodeAsset(asset, desiredProfile);
+	await waitTask(api, transcode.task);
+	return await api.getAsset(transcode.asset.id);
 }
 
 let currStep = 0;
