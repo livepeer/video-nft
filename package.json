@@ -16,7 +16,6 @@
 	},
 	"homepage": "https://livepeer.com/dashboard/assets",
 	"license": "MIT",
-	"type": "module",
 	"main": "dist/video-nft.cjs.js",
 	"module": "dist/video-nft.esm.js",
 	"browser": "dist/video-nft.umd.js",
