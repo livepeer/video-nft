@@ -1231,7 +1231,7 @@ export interface FfmpegProfile {
 	encoder?: 'h264' | 'hevc' | 'vp8' | 'vp9';
 }
 export interface Asset {
-	id?: string;
+	id: string;
 	/**
 	 * Type of the asset.
 	 */

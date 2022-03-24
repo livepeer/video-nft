@@ -1,7 +1,10 @@
 import resolve from 'rollup-plugin-node-resolve';
 import commonjs from 'rollup-plugin-commonjs';
-import typescript from 'rollup-plugin-typescript';
+import baseTypescript from 'rollup-plugin-typescript2';
+import dts from 'rollup-plugin-dts';
 import pkg from './package.json';
+
+const typescript = () => baseTypescript({ useTsconfigDeclarationDir: true });
 
 export default [
 	// browser-friendly UMD build
@@ -10,38 +13,36 @@ export default [
 		output: {
 			name: 'video-nft',
 			file: pkg.browser,
-			format: 'umd'
+			format: 'umd',
+			sourcemap: true
 		},
-		plugins: [
-			resolve(), // so Rollup can find deps
-			commonjs(), // so Rollup can convert `ms` to an ES module
-			typescript() // so Rollup can convert TypeScript to JavaScript
-		]
+		plugins: [resolve(), commonjs(), typescript()]
 	},
-
 	// CommonJS (for Node) and ES module (for bundlers) build.
-	// (We could have three entries in the configuration array
-	// instead of two, but it's quicker to generate multiple
-	// builds from a single configuration where possible, using
-	// an array for the `output` option, where we can specify
-	// `file` and `format` for each target)
 	{
 		input: 'src/index.ts',
 		external: ['axios', 'browser-fs-access', 'ethers', 'yargs', 'inquirer'],
-		plugins: [
-			typescript() // so Rollup can convert TypeScript to JavaScript
-		],
+		plugins: [typescript()],
 		output: [
-			{ file: pkg.main, format: 'cjs' },
-			{ file: pkg.module, format: 'es' }
+			{ file: pkg.main, format: 'cjs', sourcemap: true },
+			{ file: pkg.module, format: 'es', sourcemap: true }
 		]
 	},
 	{
+		input: ['dist/types/index.d.ts'],
+		output: [{ file: 'dist/index.d.ts', format: 'es' }],
+		plugins: [dts()]
+	},
+	// cli
+	{
 		input: 'src/cli.ts',
 		external: ['axios', 'browser-fs-access', 'ethers', 'yargs', 'inquirer'],
-		plugins: [
-			typescript() // so Rollup can convert TypeScript to JavaScript
-		],
-		output: { file: pkg.bin, format: 'cjs' }
+		plugins: [typescript()],
+		output: { file: pkg.bin, format: 'cjs', sourcemap: true }
+	},
+	{
+		input: ['dist/types/cli.d.ts'],
+		output: [{ file: 'bin/video-nft.d.ts', format: 'es' }],
+		plugins: [dts()]
 	}
 ];
