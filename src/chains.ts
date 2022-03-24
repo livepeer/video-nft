@@ -57,8 +57,8 @@ const builtinChains: Record<string, BuiltinChainInfo> = {
 	}
 };
 
-export function toHexChainId(chainId: string | number) {
-	return utils.hexValue(chainId);
+export function toHexChainId(chainId: string | number | undefined) {
+	return chainId == null ? '' : utils.hexValue(chainId);
 }
 
 export function toNumberChainId(chainId: string | number) {

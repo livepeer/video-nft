@@ -49,7 +49,7 @@ export class VideoNFT {
 		// provider. But the provider explodes if the chain changes, so we force
 		// users to send the chainId here so it's clear they need to recreate
 		// the SDK instance if the chain changes.
-		this.chainId = !web3?.chainId ? '' : toHexChainId(web3?.chainId);
+		this.chainId = toHexChainId(web3?.chainId);
 	}
 
 	async createNft(args: {
