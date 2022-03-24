@@ -17,29 +17,30 @@
 	"homepage": "https://livepeer.com/dashboard/assets",
 	"license": "MIT",
 	"type": "module",
-	"main": "dist/cjs/index.js",
-	"module": "dist/esm/index.js",
+	"main": "dist/video-nft.cjs.js",
+	"module": "dist/video-nft.esm.js",
+	"browser": "dist/video-nft.umd.js",
 	"bin": "bin/video-nft",
 	"directories": {
 		"src:": "src",
 		"bin:": "bin",
-		"lib": "lib"
+		"dist": "dist"
 	},
 	"files": [
 		"src",
 		"bin",
-		"lib"
+		"dist"
 	],
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/livepeer/livepeer-com.git"
+		"url": "git+https://github.com/livepeer/video-nft.git"
 	},
 	"scripts": {
-		"prepare": "yarn format && yarn build",
-		"build": "tsc -noEmit && node esbuild.config.js",
-		"start": "yarn build && node lib/cli.js",
+		"prepare": "yarn clean && yarn format && yarn build",
+		"build": "rollup -c",
+		"dev": "rollup -c -w",
 		"format": "prettier --write \"./**/*.{ts,js,json}\"",
-		"clean": "shx rm -rf ./dist"
+		"clean": "rm -rf ./dist ./bin"
 	},
 	"bugs": {
 		"url": "https://github.com/livepeer/livepeer-com/issues"
@@ -47,15 +48,8 @@
 	"dependencies": {
 		"axios": "^0.26.0",
 		"browser-fs-access": "^0.25.0",
-		"chalk": "^5.0.0",
-		"cli-alerts": "^1.2.2",
-		"cli-handle-error": "^4.4.0",
-		"cli-handle-unhandled": "^1.1.1",
-		"cli-meow-help": "^2.0.2",
-		"cli-welcome": "^2.2.2",
 		"ethers": "^5.6.1",
 		"inquirer": "^8.2.0",
-		"meow": "^10.1.2",
 		"yargs": "^17.3.1"
 	},
 	"devDependencies": {
@@ -68,6 +62,12 @@
 		"esbuild": "^0.14.27",
 		"eslint": "^8.9.0",
 		"prettier": "^2.5.1",
-		"typescript": "^4.5.5"
+		"typescript": "^4.5.5",
+		"rollup": "^1.0.0",
+		"rollup-plugin-commonjs": "^9.2.0",
+		"rollup-plugin-node-resolve": "^4.0.0",
+		"rollup-plugin-typescript": "^1.0.0",
+		"ts-node": "^7.0.1",
+		"tslib": "^1.9.3"
 	}
 }
