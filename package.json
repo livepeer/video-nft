@@ -20,6 +20,7 @@
 	"module": "dist/index.esm.js",
 	"browser": "dist/index.umd.js",
 	"cli": "dist/cli.js",
+	"types": "dist/index.d.ts",
 	"bin": "bin/video-nft",
 	"directories": {
 		"src:": "src",
