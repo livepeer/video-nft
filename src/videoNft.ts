@@ -4,17 +4,27 @@ import VodApi, { ApiAuthorization } from './api';
 import { fileOpen } from 'browser-fs-access';
 import { getDesiredBitrate, makeProfile } from './transcode';
 import { Asset } from './types/schema';
-import { builtinChains, isChainBuiltin } from './chains';
+import { getBuiltinChain, toHexChainId } from './chains';
 
 type EthereumOrProvider =
 	| ethers.providers.ExternalProvider
 	| ethers.providers.JsonRpcFetchFunc
 	| ethers.providers.JsonRpcProvider;
 
-const asJsonRpcProvider = (ethOrPrv: EthereumOrProvider) =>
-	ethOrPrv instanceof ethers.providers.JsonRpcProvider
+const asJsonRpcProvider = (ethOrPrv?: EthereumOrProvider) =>
+	!ethOrPrv
+		? undefined
+		: ethOrPrv instanceof ethers.providers.JsonRpcProvider
 		? ethOrPrv
 		: new ethers.providers.Web3Provider(ethOrPrv);
+
+type MintedNftInfo = {
+	tokenId?: number;
+	opensea?: {
+		tokenUrl?: string;
+		contractUrl: string;
+	};
+};
 
 const videoNftAbi = [
 	'event Mint(address indexed sender, address indexed owner, string tokenURI, uint256 tokenId)',
@@ -22,19 +32,24 @@ const videoNftAbi = [
 ];
 
 export class VideoNFT {
-	private ethProvider: ethers.providers.JsonRpcProvider;
+	private ethProvider?: ethers.providers.JsonRpcProvider;
 	private chainId: string;
 	private api: VodApi;
 
 	constructor(
-		ethereumOrProvider: EthereumOrProvider,
-		chainId: string,
-		auth: ApiAuthorization,
-		apiEndpoint?: string
+		api: { auth: ApiAuthorization; endpoint?: string },
+		web3?: {
+			ethereum: EthereumOrProvider;
+			chainId: string | number;
+		}
 	) {
-		this.ethProvider = asJsonRpcProvider(ethereumOrProvider);
-		this.chainId = chainId;
-		this.api = new VodApi(auth, apiEndpoint);
+		this.api = new VodApi(api.auth, api.endpoint);
+		this.ethProvider = asJsonRpcProvider(web3?.ethereum);
+		// The chainId would not be really necessary since we can get it from the
+		// provider. But the provider explodes if the chain changes, so we force
+		// users to send the chainId here so it's clear they need to recreate
+		// the SDK instance if the chain changes.
+		this.chainId = !web3?.chainId ? '' : toHexChainId(web3?.chainId);
 	}
 
 	async createNft(args: {
@@ -42,7 +57,7 @@ export class VideoNFT {
 		skipNormalize: boolean;
 		nftMetadata: string;
 		mint: {
-			contractAddress: string;
+			contractAddress?: string;
 			to?: string;
 		};
 	}) {
@@ -59,8 +74,8 @@ export class VideoNFT {
 			mint: { contractAddress, to }
 		} = args;
 		const tx = await this.mintNft(
-			contractAddress,
 			ipfsInfo?.nftMetadataUrl ?? '',
+			contractAddress,
 			to
 		);
 		return this.getMintedNftInfo(tx);
@@ -145,14 +160,18 @@ export class VideoNFT {
 		contractAddress?: string,
 		to?: string
 	): Promise<ethers.ContractTransaction> {
-		contractAddress ||= builtinChains[this.chainId]?.defaultContract;
+		contractAddress ||= getBuiltinChain(this.chainId)?.defaultContract;
 		if (!contractAddress) {
-			throw new Error('No contract address provided nor builtin network');
+			throw new Error('No contract address provided nor builtin chain');
+		}
+		if (!this.ethProvider) {
+			throw new Error('No Ethereum provider configured');
 		}
 		const net = await this.ethProvider.getNetwork();
-		if (ethers.utils.hexlify(net.chainId) !== this.chainId) {
+		const currChainId = toHexChainId(net.chainId);
+		if (currChainId !== this.chainId) {
 			throw new Error(
-				`Inconsistent chain ID: created for ${this.chainId} but found ${net.chainId}`
+				`Inconsistent chain ID: created for ${this.chainId} but found ${currChainId}`
 			);
 		}
 
@@ -166,21 +185,32 @@ export class VideoNFT {
 		return await videoNft.mint(owner, tokenUri);
 	}
 
-	async getMintedNftInfo(tx: ethers.ContractTransaction) {
+	async getMintedNftInfo(
+		tx: ethers.ContractTransaction
+	): Promise<MintedNftInfo> {
 		const receipt = await tx.wait();
 		const mintEv = receipt.events?.find(ev => ev?.event === 'Mint')?.args;
 		const tokenId =
 			mintEv && mintEv.length > 3
 				? (mintEv[3].toNumber() as number)
-				: null;
-		const chain = builtinChains[this.chainId];
-		return !tokenId
-			? null
-			: !chain
-			? { tokenId }
-			: {
-					tokenId,
-					openseaUrl: `${chain.openseaBaseUrl}/assets/${chain.openseaChainName}/${receipt.to}/${tokenId}`
-			  };
+				: undefined;
+		let info: MintedNftInfo = { tokenId };
+		const chainInfo = getBuiltinChain(this.chainId);
+		if (chainInfo?.opensea) {
+			const {
+				opensea: { baseUrl, chainName }
+			} = chainInfo;
+			const { to: contractAddr } = receipt;
+			info = {
+				...info,
+				opensea: {
+					contractUrl: `${baseUrl}/assets?search%5Bquery%5D=${contractAddr}`,
+					tokenUrl: !tokenId
+						? undefined
+						: `${baseUrl}/assets/${chainName}/${contractAddr}/${tokenId}`
+				}
+			};
+		}
+		return info;
 	}
 }

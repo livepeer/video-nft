@@ -1,4 +1,4 @@
-import { ethers } from 'ethers';
+import { ethers, utils } from 'ethers';
 
 export type ChainSpec = {
 	chainId: `0x${string}`;
@@ -17,11 +17,13 @@ export type ChainSpec = {
 export type BuiltinChainInfo = {
 	spec: ChainSpec;
 	defaultContract: `0x${string}`;
-	openseaBaseUrl: string;
-	openseaChainName: string;
+	opensea?: {
+		baseUrl: string;
+		chainName: string;
+	};
 };
 
-export const builtinChains: Record<string, BuiltinChainInfo> = {
+const builtinChains: Record<string, BuiltinChainInfo> = {
 	'0x89': {
 		spec: {
 			chainId: '0x89',
@@ -34,8 +36,10 @@ export const builtinChains: Record<string, BuiltinChainInfo> = {
 			]
 		},
 		defaultContract: '0x69C53E7b8c41bF436EF5a2D81DB759Dc8bD83b5F',
-		openseaBaseUrl: 'https://opensea.io',
-		openseaChainName: 'matic'
+		opensea: {
+			baseUrl: 'https://opensea.io',
+			chainName: 'matic'
+		}
 	},
 	'0x13881': {
 		spec: {
@@ -46,10 +50,34 @@ export const builtinChains: Record<string, BuiltinChainInfo> = {
 			blockExplorerUrls: ['https://mumbai.polygonscan.com']
 		},
 		defaultContract: '0xA4E1d8FE768d471B048F9d73ff90ED8fcCC03643',
-		openseaBaseUrl: 'https://testnets.opensea.io',
-		openseaChainName: 'mumbai'
+		opensea: {
+			baseUrl: 'https://testnets.opensea.io',
+			chainName: 'mumbai'
+		}
 	}
 };
+
+export function toHexChainId(chainId: string | number) {
+	return utils.hexValue(chainId);
+}
+
+export function toNumberChainId(chainId: string | number) {
+	return parseInt(toHexChainId(chainId), 16);
+}
+
+export function isChainBuiltin(chainId: string | number) {
+	return !!builtinChains[toHexChainId(chainId)];
+}
+
+export function listBuiltinChains(): string[] {
+	return Object.keys(builtinChains);
+}
+
+export function getBuiltinChain(
+	chainId: string | number
+): BuiltinChainInfo | null {
+	return builtinChains[toHexChainId(chainId)] || null;
+}
 
 export function switchChain(
 	ethereum: ethers.providers.ExternalProvider,
@@ -92,8 +120,4 @@ export async function switchOrAddChain(
 	}
 	await addChain(ethereum, chainSpec);
 	return { added: true };
-}
-
-export function isChainBuiltin(chainId: string) {
-	return !!builtinChains[chainId];
 }

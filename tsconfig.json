@@ -1,9 +1,9 @@
 {
 	"include": ["./src/**/*.ts"],
 	"compilerOptions": {
-		"lib": ["es2020", "DOM"],
+		"lib": ["es2015", "DOM"],
 		"module": "commonjs",
-		"target": "es2019",
+		"target": "es2015",
 
 		/* Visit https://aka.ms/tsconfig.json to read more about this file */
 
