@@ -38,11 +38,11 @@ export default [
 		input: 'src/cli.ts',
 		external: ['axios', 'browser-fs-access', 'ethers', 'yargs', 'inquirer'],
 		plugins: [typescript()],
-		output: { file: pkg.bin, format: 'cjs', sourcemap: true }
+		output: { file: pkg.cli, format: 'cjs', sourcemap: true }
 	},
 	{
 		input: ['dist/types/cli.d.ts'],
-		output: [{ file: 'bin/video-nft.d.ts', format: 'es' }],
+		output: [{ file: 'dist/cli.d.ts', format: 'es' }],
 		plugins: [dts()]
 	}
 ];

@@ -19,6 +19,7 @@
 	"main": "dist/index.cjs.js",
 	"module": "dist/index.esm.js",
 	"browser": "dist/index.umd.js",
+	"cli": "dist/cli.js",
 	"bin": "bin/video-nft",
 	"directories": {
 		"src:": "src",
@@ -38,8 +39,9 @@
 		"prepare": "yarn clean && yarn format && yarn build",
 		"build": "rollup -c",
 		"dev": "rollup -c -w",
+		"start": "yarn build && ./bin/video-nft",
 		"format": "prettier --write \"./**/*.{ts,js,json}\"",
-		"clean": "rm -rf ./dist ./bin"
+		"clean": "rm -rf ./dist"
 	},
 	"bugs": {
 		"url": "https://github.com/livepeer/livepeer-com/issues"
