@@ -14,7 +14,7 @@ async function videoNft() {
 		url: uploadUrl,
 		asset: { id: assetId },
 		task: importTask
-	} = await api.requestUploadUrl(args.assetName);
+	} = await api.requestUploadUrl(args.assetName, args.objectStoreId);
 	console.log(`Pending asset with id=${assetId}`);
 
 	printStep('Uploading file...');
