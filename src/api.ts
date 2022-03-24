@@ -13,12 +13,15 @@ export default class VodApi {
 	constructor(auth: ApiAuthorization, apiEndpoint: string = prodApiEndpoint) {
 		this.client = axios.create({
 			baseURL: apiEndpoint,
-			headers:
-				'apiKey' in auth
-					? { Authorization: `Bearer ${auth.apiKey}` }
+			headers: {
+				Authorization: !auth
+					? ''
+					: 'apiKey' in auth
+					? `Bearer ${auth.apiKey}`
 					: 'jwt' in auth
-					? { Authorization: `JWT ${auth.jwt}` }
-					: {},
+					? `JWT ${auth.jwt}`
+					: ''
+			},
 			maxContentLength: Infinity,
 			maxBodyLength: Infinity
 		});

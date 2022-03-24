@@ -1,5 +1,5 @@
-import resolve from 'rollup-plugin-node-resolve';
-import commonjs from 'rollup-plugin-commonjs';
+import resolve from '@rollup/plugin-node-resolve';
+import commonjs from '@rollup/plugin-commonjs';
 import baseTypescript from 'rollup-plugin-typescript2';
 import dts from 'rollup-plugin-dts';
 import pkg from './package.json';
