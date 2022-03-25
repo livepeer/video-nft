@@ -143,7 +143,7 @@ export class VideoNFT {
 
 	async exportToIPFS(
 		assetId: string,
-		nftMetadata: string | Record<string, any>,
+		nftMetadata?: string | Record<string, any>,
 		reportProgress?: (progress: number) => void
 	) {
 		if (typeof nftMetadata === 'string') {
