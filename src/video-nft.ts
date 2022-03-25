@@ -37,13 +37,13 @@ export class VideoNFT {
 	private api: VodApi;
 
 	constructor(
-		api: { auth: ApiAuthorization; endpoint?: string },
+		api?: { auth?: ApiAuthorization; endpoint?: string },
 		web3?: {
 			ethereum: EthereumOrProvider;
 			chainId: string | number;
 		}
 	) {
-		this.api = new VodApi(api.auth, api.endpoint);
+		this.api = new VodApi(api?.auth, api?.endpoint);
 		this.ethProvider = asJsonRpcProvider(web3?.ethereum);
 		// The chainId would not be really necessary since we can get it from the
 		// provider. But the provider explodes if the chain changes, so we force
