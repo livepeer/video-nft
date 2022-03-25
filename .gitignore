@@ -5,7 +5,7 @@ node_modules/
 /node_modules/
 
 lib/
-bin/
+dist/
 
 # Packages #
 ############

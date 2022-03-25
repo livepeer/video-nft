@@ -1,20 +1,30 @@
-import * as fs from 'fs';
-import axios, { AxiosInstance, Method } from 'axios';
+import axios, { AxiosInstance, AxiosRequestConfig, Method } from 'axios';
 import { Asset, Task, FfmpegProfile } from './types/schema';
 
 export const prodApiEndpoint = 'https://livepeer.com';
 
+type ExportTaskParams = NonNullable<Task['params']>['export'];
+
+export type ApiAuthorization = { apiKey: string } | { jwt: string };
+
 export default class VodApi {
 	private client: AxiosInstance;
 
-	constructor(apiKey: string, apiEndpoint: string = prodApiEndpoint) {
+	constructor(auth?: ApiAuthorization, apiEndpoint: string = '') {
 		this.client = axios.create({
 			baseURL: apiEndpoint,
 			headers: {
-				Authorization: `Bearer ${apiKey}`
+				Authorization: !auth
+					? ''
+					: 'apiKey' in auth
+					? `Bearer ${auth.apiKey}`
+					: 'jwt' in auth
+					? `JWT ${auth.jwt}`
+					: ''
 			},
 			maxContentLength: Infinity,
-			maxBodyLength: Infinity
+			maxBodyLength: Infinity,
+			maxRedirects: 0
 		});
 		this.client.interceptors.response.use(res => {
 			if (res.status >= 300) {
@@ -46,14 +56,23 @@ export default class VodApi {
 		);
 	}
 
-	async uploadFile(url: string, filename: string) {
-		let file: fs.ReadStream | null = null;
-		try {
-			file = fs.createReadStream(filename);
-			await this.makeRequest('put', url, file);
-		} finally {
-			file?.close();
-		}
+	uploadFile(
+		url: string,
+		content: File | NodeJS.ReadableStream,
+		mimeType?: string,
+		reportProgress?: (progress: number) => void
+	) {
+		const defaultMimeType =
+			typeof File !== 'undefined' && content instanceof File
+				? content.type
+				: 'application/octet-stream';
+		return this.makeRequest('put', url, content, {
+			headers: {
+				contentType: mimeType || defaultMimeType
+			},
+			onUploadProgress:
+				reportProgress && (p => reportProgress(p.loaded / p.total))
+		});
 	}
 
 	async transcodeAsset(src: Asset, profile: FfmpegProfile, name?: string) {
@@ -68,22 +87,17 @@ export default class VodApi {
 		);
 	}
 
-	async exportAsset(id: string, nftMetadata: Object) {
+	async exportAsset(id: string, params: ExportTaskParams) {
 		return this.makeRequest<{ task: Task }>(
 			'post',
 			`/api/asset/${id}/export`,
-			{
-				ipfs: { nftMetadata }
-			}
+			params
 		);
 	}
 
 	// next level utilities
 
-	async waitTask(task: Task) {
-		console.log(
-			`Waiting for ${task.type} task completion... id=${task.id}`
-		);
+	async waitTask(task: Task, reportProgress?: (progress: number) => void) {
 		let lastProgress = 0;
 		while (
 			task.status?.phase !== 'completed' &&
@@ -91,7 +105,7 @@ export default class VodApi {
 		) {
 			const progress = task.status?.progress;
 			if (progress && progress !== lastProgress) {
-				console.log(` - progress: ${100 * progress}%`);
+				if (reportProgress) reportProgress(progress);
 				lastProgress = progress;
 			}
 			new Promise(resolve => setTimeout(resolve, 1000));
@@ -106,10 +120,19 @@ export default class VodApi {
 		return task;
 	}
 
-	private async makeRequest<T>(method: Method, path: string, data?: any) {
+	private async makeRequest<T>(
+		method: Method,
+		url: string,
+		data?: any,
+		additionalConfig?: AxiosRequestConfig<any>
+	) {
 		try {
-			const res = await this.client.request({ method, url: path, data });
-			res.request;
+			const res = await this.client.request({
+				...additionalConfig,
+				method,
+				url,
+				data
+			});
 			return res.data as T;
 		} catch (err: any) {
 			if (!axios.isAxiosError(err) || !err.response) {
@@ -122,7 +145,7 @@ export default class VodApi {
 			}
 
 			throw new Error(
-				`Request to ${path} failed (${status} ${statusText}): ${msg}`
+				`Request to ${url} failed (${status} ${statusText}): ${msg}`
 			);
 		}
 	}
