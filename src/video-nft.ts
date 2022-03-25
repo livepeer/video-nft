@@ -1,7 +1,6 @@
 import { ethers } from 'ethers';
 
 import VodApi, { ApiAuthorization } from './api';
-// import { showOpenFilePicker } from 'native-file-system-adapter';
 import { fileOpen } from 'browser-fs-access';
 import { getDesiredBitrate, makeProfile } from './transcode';
 import { Asset } from './types/schema';
@@ -83,13 +82,10 @@ export class VideoNFT {
 	}
 
 	async pickFile() {
-		// const [handle] = await showOpenFilePicker({
-		// 	accepts: ['mp4', 'mov', 'm4v']
-		// });
 		const { handle } = await fileOpen({
 			description: 'MP4 Video files',
 			mimeTypes: ['video/mp4'],
-			extensions: ['mp4', 'mov', 'm4v']
+			extensions: ['.mp4', '.mov', '.m4v']
 		});
 		const file = await handle?.getFile();
 		if (!file) {

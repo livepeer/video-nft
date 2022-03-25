@@ -52,7 +52,6 @@
 		"browser-fs-access": "^0.25.0",
 		"ethers": "^5.6.1",
 		"inquirer": "^8.2.0",
-		"native-file-system-adapter": "^2.0.3",
 		"yargs": "^17.3.1"
 	},
 	"devDependencies": {
