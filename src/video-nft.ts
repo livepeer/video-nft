@@ -3,7 +3,7 @@ import { ethers } from 'ethers';
 import VodApi, { ApiAuthorization } from './api';
 import { fileOpen } from 'browser-fs-access';
 import { getDesiredBitrate, makeProfile } from './transcode';
-import { Asset } from './types/schema';
+import { Asset, FfmpegProfile } from './types/schema';
 import { getBuiltinChain, toHexChainId } from './chains';
 
 type EthereumOrProvider =
@@ -82,6 +82,9 @@ export class VideoNFT {
 	}
 
 	async pickFile() {
+		if (typeof window === 'undefined') {
+			throw new Error('pickFile is only supported in the browser');
+		}
 		const { handle } = await fileOpen({
 			description: 'MP4 Video files',
 			mimeTypes: ['video/mp4'],
@@ -97,27 +100,33 @@ export class VideoNFT {
 	async createAsset(
 		name: string,
 		content: File | NodeJS.ReadableStream,
-		reportProgress?: (progress: number) => void
+		reportProgress: (progress: number) => void = () => {}
 	) {
 		const {
 			url: uploadUrl,
 			asset: { id: assetId },
 			task
 		} = await this.api.requestUploadUrl(name);
-		await this.api.uploadFile(uploadUrl, content);
-		await this.api.waitTask(task, reportProgress);
+		await this.api.uploadFile(uploadUrl, content, undefined, p =>
+			reportProgress(p / 2)
+		);
+		await this.api.waitTask(task, p => reportProgress(0.5 + p / 2));
 		return await this.api.getAsset(assetId);
 	}
 
 	checkNftNormalize(asset: Asset) {
+		let desiredProfile: FfmpegProfile | null = null;
 		try {
 			const desiredBitrate = getDesiredBitrate(asset);
+			if (desiredBitrate) {
+				desiredProfile = makeProfile(asset, desiredBitrate);
+			}
 			return {
 				possible: true,
-				desiredBitrate
+				desiredProfile
 			};
 		} catch (e) {
-			return { possible: false, desiredBitrate: null };
+			return { possible: false, desiredProfile };
 		}
 	}
 
@@ -125,15 +134,12 @@ export class VideoNFT {
 		asset: Asset,
 		reportProgress?: (progress: number) => void
 	) {
-		const { possible, desiredBitrate } = this.checkNftNormalize(asset);
-		if (!possible || !desiredBitrate) {
+		const { possible, desiredProfile } = this.checkNftNormalize(asset);
+		if (!possible || !desiredProfile) {
 			return asset;
 		}
 
-		const transcode = await this.api.transcodeAsset(
-			asset,
-			makeProfile(asset, desiredBitrate)
-		);
+		const transcode = await this.api.transcodeAsset(asset, desiredProfile);
 		await this.api.waitTask(transcode.task, reportProgress);
 		return await this.api.getAsset(transcode.asset.id);
 	}

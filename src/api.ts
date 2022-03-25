@@ -60,13 +60,22 @@ export default class VodApi {
 	uploadFile(
 		url: string,
 		content: File | NodeJS.ReadableStream,
-		mimeType?: string
+		mimeType?: string,
+		reportProgress?: (progress: number) => void
 	) {
 		const defaultMimeType =
-			content instanceof File ? content.type : 'application/octet-stream';
-		return this.makeRequest('put', url, content, {
-			contentType: mimeType || defaultMimeType
-		});
+			typeof File !== 'undefined' && content instanceof File
+				? content.type
+				: 'application/octet-stream';
+		return this.makeRequest(
+			'put',
+			url,
+			content,
+			{
+				contentType: mimeType || defaultMimeType
+			},
+			reportProgress
+		);
 	}
 
 	async transcodeAsset(src: Asset, profile: FfmpegProfile, name?: string) {
@@ -118,14 +127,17 @@ export default class VodApi {
 		method: Method,
 		url: string,
 		data?: any,
-		headers?: AxiosRequestHeaders
+		headers?: AxiosRequestHeaders,
+		reportProgress?: (progress: number) => void
 	) {
 		try {
 			const res = await this.client.request({
 				method,
 				url,
 				data,
-				headers
+				headers,
+				onUploadProgress:
+					reportProgress && (p => reportProgress(p.loaded / p.total))
 			});
 			return res.data as T;
 		} catch (err: any) {

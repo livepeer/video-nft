@@ -43,7 +43,6 @@ export default [
 		input: 'src/cli.ts',
 		external: [
 			'axios',
-			'browser-fs-access',
 			'ethers',
 			'fs',
 			'inquirer',
@@ -51,7 +50,11 @@ export default [
 			'yargs',
 			'yargs/helpers'
 		],
-		plugins: [typescript()],
+		plugins: [
+			resolve({ resolveOnly: ['browser-fs-access'] }),
+			commonjs(),
+			typescript()
+		],
 		output: { file: pkg.cli, format: 'cjs', sourcemap: true }
 	}
 ];
