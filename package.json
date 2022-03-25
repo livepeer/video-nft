@@ -1,6 +1,6 @@
 {
 	"name": "@livepeer/video-nft",
-	"version": "0.2.0-beta.4",
+	"version": "0.2.0-rc",
 	"description": "1-command minting of video NFTs",
 	"keywords": [
 		"video",
