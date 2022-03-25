@@ -15,6 +15,7 @@ export default [
 			file: pkg.browser,
 			format: 'umd',
 			sourcemap: true
+			// inlineDynamicImports: true
 		},
 		plugins: [resolve(), commonjs(), typescript()]
 	},
@@ -36,7 +37,16 @@ export default [
 	// cli
 	{
 		input: 'src/cli.ts',
-		external: ['axios', 'browser-fs-access', 'ethers', 'yargs', 'inquirer'],
+		external: [
+			'axios',
+			'browser-fs-access',
+			'ethers',
+			'fs',
+			'inquirer',
+			'path',
+			'yargs',
+			'yargs/helpers'
+		],
 		plugins: [typescript()],
 		output: { file: pkg.cli, format: 'cjs', sourcemap: true }
 	},

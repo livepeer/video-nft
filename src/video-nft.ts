@@ -1,7 +1,8 @@
 import { ethers } from 'ethers';
 
 import VodApi, { ApiAuthorization } from './api';
-// import { fileOpen } from 'browser-fs-access';
+// import { showOpenFilePicker } from 'native-file-system-adapter';
+import { fileOpen } from 'browser-fs-access';
 import { getDesiredBitrate, makeProfile } from './transcode';
 import { Asset } from './types/schema';
 import { getBuiltinChain, toHexChainId } from './chains';
@@ -53,7 +54,6 @@ export class VideoNFT {
 	}
 
 	async createNft(args: {
-		file: NodeJS.ReadableStream;
 		assetName: string;
 		skipNormalize: boolean;
 		nftMetadata: string;
@@ -62,10 +62,8 @@ export class VideoNFT {
 			to?: string;
 		};
 	}) {
-		// const file = await this.pickFile();
-		let asset = await this.createAsset(args.assetName, {
-			stream: args.file
-		});
+		const file = await this.pickFile();
+		let asset = await this.createAsset(args.assetName, { file });
 		if (!args.skipNormalize) {
 			asset = await this.nftNormalize(asset);
 		}
@@ -84,18 +82,22 @@ export class VideoNFT {
 		return this.getMintedNftInfo(tx);
 	}
 
-	// async pickFile() {
-	// 	const { handle } = await fileOpen({
-	// 		description: 'MP4 Video files',
-	// 		mimeTypes: ['video/mp4'],
-	// 		extensions: ['mp4', 'mov', 'm4v']
-	// 	});
-	// 	const file = await handle?.getFile();
-	// 	if (!file) {
-	// 		throw new Error('Failed to open file');
-	// 	}
-	// 	return file;
-	// }
+	async pickFile() {
+		// const [handle] = await showOpenFilePicker({
+		// 	accepts: ['mp4', 'mov', 'm4v']
+		// });
+		const { handle } = await fileOpen({
+			description: 'MP4 Video files',
+			mimeTypes: ['video/mp4'],
+			extensions: ['mp4', 'mov', 'm4v']
+		});
+		const file = await handle?.getFile();
+		if (!file) {
+			throw new Error('Failed to open file');
+		}
+		return file;
+		// return null as any;
+	}
 
 	async createAsset(
 		name: string,
