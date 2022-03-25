@@ -49,12 +49,6 @@ function parseRawArgs(argv?: string | readonly string[]) {
 				describe: 'the endpoint to use for the Livepeer API',
 				type: 'string',
 				default: prodApiEndpoint
-			},
-			'object-store-id': {
-				describe:
-					'the ID of the object store to use for the assets in Livepeer API',
-				type: 'string',
-				default: ''
 			}
 		})
 		.usage(

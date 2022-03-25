@@ -46,13 +46,12 @@ export default class VodApi {
 		return this.makeRequest<Task>('get', `/api/task/${id}`);
 	}
 
-	async requestUploadUrl(assetName: string, objectStoreId?: string) {
+	async requestUploadUrl(assetName: string) {
 		return this.makeRequest<{ url: string; asset: Asset; task: Task }>(
 			'post',
 			`/api/asset/request-upload`,
 			{
-				name: assetName,
-				objectStoreId
+				name: assetName
 			}
 		);
 	}
