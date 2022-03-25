@@ -1,4 +1,4 @@
-import axios, { AxiosInstance, AxiosRequestHeaders, Method } from 'axios';
+import axios, { AxiosInstance, AxiosRequestConfig, Method } from 'axios';
 import { Asset, Task, FfmpegProfile } from './types/schema';
 
 export const prodApiEndpoint = 'https://livepeer.com';
@@ -67,15 +67,13 @@ export default class VodApi {
 			typeof File !== 'undefined' && content instanceof File
 				? content.type
 				: 'application/octet-stream';
-		return this.makeRequest(
-			'put',
-			url,
-			content,
-			{
+		return this.makeRequest('put', url, content, {
+			headers: {
 				contentType: mimeType || defaultMimeType
 			},
-			reportProgress
-		);
+			onUploadProgress:
+				reportProgress && (p => reportProgress(p.loaded / p.total))
+		});
 	}
 
 	async transcodeAsset(src: Asset, profile: FfmpegProfile, name?: string) {
@@ -127,17 +125,14 @@ export default class VodApi {
 		method: Method,
 		url: string,
 		data?: any,
-		headers?: AxiosRequestHeaders,
-		reportProgress?: (progress: number) => void
+		additionalConfig?: AxiosRequestConfig<any>
 	) {
 		try {
 			const res = await this.client.request({
+				...additionalConfig,
 				method,
 				url,
-				data,
-				headers,
-				onUploadProgress:
-					reportProgress && (p => reportProgress(p.loaded / p.total))
+				data
 			});
 			return res.data as T;
 		} catch (err: any) {
