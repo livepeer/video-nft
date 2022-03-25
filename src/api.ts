@@ -1,4 +1,4 @@
-import axios, { AxiosInstance, Method } from 'axios';
+import axios, { AxiosInstance, AxiosRequestHeaders, Method } from 'axios';
 import { Asset, Task, FfmpegProfile } from './types/schema';
 
 export const prodApiEndpoint = 'https://livepeer.com';
@@ -56,8 +56,16 @@ export default class VodApi {
 		);
 	}
 
-	uploadFile(url: string, contents: NodeJS.ReadableStream) {
-		return this.makeRequest('put', url, contents);
+	uploadFile(
+		url: string,
+		content: File | NodeJS.ReadableStream,
+		mimeType?: string
+	) {
+		const defaultMimeType =
+			content instanceof File ? content.type : 'application/octet-stream';
+		return this.makeRequest('put', url, content, {
+			contentType: mimeType || defaultMimeType
+		});
 	}
 
 	async transcodeAsset(src: Asset, profile: FfmpegProfile, name?: string) {
@@ -105,10 +113,19 @@ export default class VodApi {
 		return task;
 	}
 
-	private async makeRequest<T>(method: Method, path: string, data?: any) {
+	private async makeRequest<T>(
+		method: Method,
+		url: string,
+		data?: any,
+		headers?: AxiosRequestHeaders
+	) {
 		try {
-			const res = await this.client.request({ method, url: path, data });
-			res.request;
+			const res = await this.client.request({
+				method,
+				url,
+				data,
+				headers
+			});
 			return res.data as T;
 		} catch (err: any) {
 			if (!axios.isAxiosError(err) || !err.response) {
@@ -121,7 +138,7 @@ export default class VodApi {
 			}
 
 			throw new Error(
-				`Request to ${path} failed (${status} ${statusText}): ${msg}`
+				`Request to ${url} failed (${status} ${statusText}): ${msg}`
 			);
 		}
 	}

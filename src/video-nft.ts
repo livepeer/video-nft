@@ -62,7 +62,7 @@ export class VideoNFT {
 		};
 	}) {
 		const file = await this.pickFile();
-		let asset = await this.createAsset(args.assetName, { file });
+		let asset = await this.createAsset(args.assetName, file);
 		if (!args.skipNormalize) {
 			asset = await this.nftNormalize(asset);
 		}
@@ -92,12 +92,11 @@ export class VideoNFT {
 			throw new Error('Failed to open file');
 		}
 		return file;
-		// return null as any;
 	}
 
 	async createAsset(
 		name: string,
-		contents: { file: File } | { stream: NodeJS.ReadableStream },
+		content: File | NodeJS.ReadableStream,
 		reportProgress?: (progress: number) => void
 	) {
 		const {
@@ -105,9 +104,7 @@ export class VideoNFT {
 			asset: { id: assetId },
 			task
 		} = await this.api.requestUploadUrl(name);
-		const stream =
-			'file' in contents ? contents.file.stream() : contents.stream;
-		await this.api.uploadFile(uploadUrl, stream);
+		await this.api.uploadFile(uploadUrl, content);
 		await this.api.waitTask(task, reportProgress);
 		return await this.api.getAsset(assetId);
 	}

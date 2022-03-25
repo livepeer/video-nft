@@ -53,10 +53,5 @@ export default [
 		],
 		plugins: [typescript()],
 		output: { file: pkg.cli, format: 'cjs', sourcemap: true }
-	},
-	{
-		input: ['dist/types/cli.d.ts'],
-		output: [{ file: 'dist/cli.d.ts', format: 'es' }],
-		plugins: [dts()]
 	}
 ];
