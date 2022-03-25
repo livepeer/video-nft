@@ -22,8 +22,12 @@ export default [
 	// CommonJS (for Node) and ES module (for bundlers) build.
 	{
 		input: 'src/index.ts',
-		external: ['axios', 'browser-fs-access', 'ethers', 'yargs', 'inquirer'],
-		plugins: [typescript()],
+		external: ['axios', 'ethers', 'yargs', 'inquirer'],
+		plugins: [
+			resolve({ resolveOnly: ['browser-fs-access'] }),
+			commonjs(),
+			typescript()
+		],
 		output: [
 			{ file: pkg.main, format: 'cjs', sourcemap: true },
 			{ file: pkg.module, format: 'es', sourcemap: true }
