@@ -23,7 +23,8 @@ export default class VodApi {
 					: ''
 			},
 			maxContentLength: Infinity,
-			maxBodyLength: Infinity
+			maxBodyLength: Infinity,
+			maxRedirects: 0
 		});
 		this.client.interceptors.response.use(res => {
 			if (res.status >= 300) {
