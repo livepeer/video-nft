@@ -10,7 +10,7 @@ export type ApiAuthorization = { apiKey: string } | { jwt: string };
 export default class VodApi {
 	private client: AxiosInstance;
 
-	constructor(auth: ApiAuthorization, apiEndpoint: string = prodApiEndpoint) {
+	constructor(auth: ApiAuthorization, apiEndpoint: string = '') {
 		this.client = axios.create({
 			baseURL: apiEndpoint,
 			headers: {
