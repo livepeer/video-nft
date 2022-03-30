@@ -1,6 +1,8 @@
 import axios, { AxiosInstance, AxiosRequestConfig, Method } from 'axios';
 import { Asset, Task, FfmpegProfile } from './types/schema';
 
+export { Asset, Task, FfmpegProfile };
+
 export const prodApiEndpoint = 'https://livepeer.com';
 
 type ExportTaskParams = NonNullable<Task['params']>['export'];
