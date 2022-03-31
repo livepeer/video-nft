@@ -69,7 +69,6 @@
 		"@typescript-eslint/parser": "^5.4.0",
 		"esbuild": "^0.14.27",
 		"eslint": "^8.9.0",
-		"fsevents": "^1.2.13",
 		"prettier": "^2.5.1",
 		"rollup": "^2.70.1",
 		"rollup-plugin-dts": "^4.2.0",
@@ -79,5 +78,8 @@
 		"typedoc": "^0.22.13",
 		"typescript": "^4.6.3",
 		"watch-http-server": "^0.7.6"
+	},
+	"optionalDependencies": {
+		"fsevents": "^1.2.13"
 	}
 }
