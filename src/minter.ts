@@ -6,7 +6,7 @@ import { getDesiredBitrate, makeProfile } from './transcode';
 import { Asset, FfmpegProfile } from './types/schema';
 import { getBuiltinChain, toHexChainId } from './chains';
 
-type EthereumOrProvider =
+export type EthereumOrProvider =
 	| ethers.providers.ExternalProvider
 	| ethers.providers.JsonRpcFetchFunc
 	| ethers.providers.JsonRpcProvider;
@@ -18,7 +18,7 @@ const asJsonRpcProvider = (ethOrPrv?: EthereumOrProvider) =>
 		? ethOrPrv
 		: new ethers.providers.Web3Provider(ethOrPrv);
 
-type MintedNftInfo = {
+export type MintedNftInfo = {
 	tokenId?: number;
 	opensea?: {
 		tokenUrl?: string;
@@ -26,12 +26,12 @@ type MintedNftInfo = {
 	};
 };
 
-const videoNftAbi = [
+export const videoNftAbi = [
 	'event Mint(address indexed sender, address indexed owner, string tokenURI, uint256 tokenId)',
 	'function mint(address owner, string tokenURI) returns (uint256)'
 ];
 
-export class VideoNFT {
+export class Minter {
 	private ethProvider?: ethers.providers.JsonRpcProvider;
 	private chainId: string;
 	private api: VodApi;

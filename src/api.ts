@@ -1,7 +1,7 @@
 import axios, { AxiosInstance, AxiosRequestConfig, Method } from 'axios';
 import { Asset, Task, FfmpegProfile } from './types/schema';
 
-export { Asset, Task, FfmpegProfile };
+export * from './types/schema';
 
 /**
  * Endpoint of the production Livepeer API. Can be used as the `apiEndpoint`

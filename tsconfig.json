@@ -77,7 +77,7 @@
 		"entryPoints": [
 			"src/index.ts",
 			"src/chains.ts",
-			"src/video-nft.ts",
+			"src/minter.ts",
 			"src/api.ts",
 			"src/transcode.ts"
 		],
