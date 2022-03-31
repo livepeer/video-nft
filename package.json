@@ -38,8 +38,11 @@
 	},
 	"scripts": {
 		"prepare": "yarn clean && yarn format && yarn build",
-		"build": "rollup -c",
+		"build": "yarn build:rollup && yarn build:docs",
+		"build:rollup": "rollup -c",
+		"build:docs": "typedoc --out ./dist/docs src/*.ts",
 		"dev": "rollup -c -w",
+		"dev:docs": "watch-http-server ./dist/docs & typedoc --watch --preserveWatchOutput --out ./dist/docs src/*.ts",
 		"start": "yarn build && ./bin/video-nft",
 		"format": "prettier --write \"./**/*.{ts,js,json}\"",
 		"clean": "rm -rf ./dist"
@@ -66,12 +69,15 @@
 		"@typescript-eslint/parser": "^5.4.0",
 		"esbuild": "^0.14.27",
 		"eslint": "^8.9.0",
+		"fsevents": "^1.2.13",
 		"prettier": "^2.5.1",
 		"rollup": "^2.70.1",
 		"rollup-plugin-dts": "^4.2.0",
 		"rollup-plugin-typescript2": "^0.31.2",
 		"ts-node": "^7.0.1",
 		"tslib": "^1.9.3",
-		"typescript": "^4.6.3"
+		"typedoc": "^0.22.13",
+		"typescript": "^4.6.3",
+		"watch-http-server": "^0.7.6"
 	}
 }
