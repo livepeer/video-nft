@@ -1,6 +1,6 @@
 import { ethers } from 'ethers';
 
-import VodApi, { ApiAuthorization } from './api';
+import { VodApi, ApiAuthentication } from './api';
 import { fileOpen } from 'browser-fs-access';
 import { getDesiredBitrate, makeProfile } from './transcode';
 import { Asset, FfmpegProfile } from './types/schema';
@@ -37,7 +37,7 @@ export class VideoNFT {
 	private api: VodApi;
 
 	constructor(
-		api?: { auth?: ApiAuthorization; endpoint?: string },
+		api?: { auth?: ApiAuthentication; endpoint?: string },
 		web3?: {
 			ethereum: EthereumOrProvider;
 			chainId: string | number;
@@ -139,7 +139,11 @@ export class VideoNFT {
 			return asset;
 		}
 
-		const transcode = await this.api.transcodeAsset(asset, desiredProfile);
+		const transcode = await this.api.transcodeAsset(
+			asset.id,
+			`${asset.name} (${desiredProfile.name})`,
+			desiredProfile
+		);
 		await this.api.waitTask(transcode.task, reportProgress);
 		return await this.api.getAsset(transcode.asset.id);
 	}

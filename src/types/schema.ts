@@ -486,8 +486,8 @@ export interface Task {
  * LMPS ffmpeg profile
  */
 export interface FfmpegProfile {
-	width: number;
 	name: string;
+	width: number;
 	height: number;
 	bitrate: number;
 	fps: number;
