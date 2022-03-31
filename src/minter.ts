@@ -29,7 +29,7 @@ export type MintedNftInfo = {
 export const videoNftAbi = [
 	'event Mint(address indexed sender, address indexed owner, string tokenURI, uint256 tokenId)',
 	'function mint(address owner, string tokenURI) returns (uint256)'
-];
+] as const;
 
 export class Minter {
 	private ethProvider?: ethers.providers.JsonRpcProvider;
@@ -49,7 +49,7 @@ export class Minter {
 		// provider. But the provider explodes if the chain changes, so we force
 		// users to send the chainId here so it's clear they need to recreate
 		// the SDK instance if the chain changes.
-		this.chainId = toHexChainId(web3?.chainId);
+		this.chainId = web3?.chainId ? toHexChainId(web3.chainId) : '';
 	}
 
 	async createNft(args: {

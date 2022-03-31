@@ -1,5 +1,34 @@
+/**
+ *
+ * This package provides some helper utilities for switching between different
+ * Ethereum-compatible chains. It also describes the SDK built-in chains, in
+ * which it already has a deployed smart contract.
+ *
+ * @remarks
+ * A built-in chain is one that we have already deployed an ERC-721 contract
+ * that implements the {@link minter.videoNftAbi | Video NFT ABI}. Those can be
+ * used as a default contract with which to mint a Video NFT.
+ *
+ * @remarks When using a built-in chain you don't need to provide a contract
+ * address on the calls to the {@link minter.Minter | Minter} for minting an
+ * NFT. You can still provide one anyway if you wish to use your own contract,
+ * but it does need to implement the {@link minter.videoNftAbi | Video NFT ABI}
+ * for the SDK to work properly.
+ *
+ * @remarks You can also use custom chains that are not built-in, but you will
+ * need always to provide your contract address to the
+ * {@link minter.Minter | Minter} functions and handle any NFT marketplace URLs
+ * or integrations.
+ *
+ * @packageDocumentation
+ */
+
 import { ethers, utils } from 'ethers';
 
+/**
+ * Defines the interface necessary for registering a new chain in a web3
+ * wallet. Especifically tested with MetaMask.
+ */
 export type ChainSpec = {
 	chainId: `0x${string}`;
 	chainName: string;
@@ -14,16 +43,25 @@ export type ChainSpec = {
 	[unknown: string]: any;
 };
 
+/**
+ * Hexadecimal representation of a chain ID.
+ */
+export type HexChainId = `0x${string}`;
+
+/**
+ * Describes all the information about a built-in chain. Also contains some
+ * helper information for generating NFT marketplace links (currently OpenSea).
+ */
 export type BuiltinChainInfo = {
 	spec: ChainSpec;
-	defaultContract: `0x${string}`;
+	defaultContract: HexChainId;
 	opensea?: {
 		baseUrl: string;
 		chainName: string;
 	};
 };
 
-const builtinChains: Record<string, BuiltinChainInfo> = {
+const builtinChains: Record<HexChainId, BuiltinChainInfo> = {
 	'0x89': {
 		spec: {
 			chainId: '0x89',
@@ -57,54 +95,124 @@ const builtinChains: Record<string, BuiltinChainInfo> = {
 	}
 };
 
-export function toHexChainId(chainId: string | number | undefined) {
-	return chainId == null ? '' : utils.hexValue(chainId);
+/**
+ * Normalizes any representation of a chain ID into a hexadecimal string, in a
+ * format supported by web3 wallets.
+ *
+ * @param chainId Chain ID to normalize.
+ *
+ * @returns Normalized hexadecimal string representing the chain ID.
+ */
+export function toHexChainId(chainId: string | number) {
+	return utils.hexValue(chainId) as HexChainId;
 }
 
+/**
+ * Converts any representation of a chain ID into its numerical ID.
+ *
+ * @param chainId Chain ID to convert.
+ *
+ * @returns Numerical ID of the chain.
+ */
 export function toNumberChainId(chainId: string | number) {
 	return parseInt(toHexChainId(chainId), 16);
 }
 
+/**
+ * Returns whether the chain with the specified ID is built-in.
+ *
+ * @param chainId Chain ID to check.
+ *
+ * @returns Boolean representing whether the chain is built-in.
+ */
 export function isChainBuiltin(chainId: string | number) {
 	return !!builtinChains[toHexChainId(chainId)];
 }
 
-export function listBuiltinChains(): string[] {
-	return Object.keys(builtinChains);
+/**
+ * Gets a list of the built-in chains IDs.
+ *
+ * @returns List of built-in chain IDs in hexadecimal format.
+ */
+export function listBuiltinChains() {
+	return Object.keys(builtinChains) as HexChainId[];
 }
 
+/**
+ * Gets the information about the built-in chain with the specified chain ID.
+ *
+ * @param chainId ID of the chain to get information about.
+ *
+ * @returns The built-in chain information or `null` if it's not built-in.
+ */
 export function getBuiltinChain(
 	chainId: string | number
 ): BuiltinChainInfo | null {
 	return builtinChains[toHexChainId(chainId)] || null;
 }
 
-export function switchChain(
+/**
+ * Requests the web3 wallet to switch the current chain to the specified one.
+ *
+ * @param ethereum Web3 connectivity external provider. In the case of MetaMask
+ * this is the object injected into `window.ethereum`.
+ *
+ * @param chainId The ID of the chain to switch to.
+ *
+ * @returns Promise that will be fulfilled when the switch is complete (e.g.
+ * after user approves it).
+ */
+export async function switchChain(
 	ethereum: ethers.providers.ExternalProvider,
 	chainId: string
 ) {
 	if (!ethereum.request) {
 		throw new Error('ethereum provider does not support request');
 	}
-	return ethereum.request({
+	await ethereum.request({
 		method: 'wallet_switchEthereumChain',
 		params: [{ chainId }]
 	});
 }
 
-export function addChain(
+/**
+ * Requests the web3 wallet to add a chain to the wallet and switch to it.
+ *
+ * @param ethereum Web3 connectivity external provider. In the case of MetaMask
+ * this is the object injected into `window.ethereum`.
+ *
+ * @param chainSpec The full specification of the chain to add.
+ *
+ * @returns Promise that will be fulfilled when the switch is complete (e.g.
+ * after user approves it).
+ */
+export async function addChain(
 	ethereum: ethers.providers.ExternalProvider,
 	chainSpec: ChainSpec
 ) {
 	if (!ethereum.request) {
 		throw new Error('ethereum provider does not support request');
 	}
-	return ethereum.request({
+	await ethereum.request({
 		method: 'wallet_addEthereumChain',
 		params: [chainSpec]
 	});
 }
 
+/**
+ * Composes {@link switchChain} and {@link addChain} to switch to the specified
+ * chain if it is already configured or otherwise add it to the wallet and then
+ * switch to it.
+ *
+ * @param ethereum Web3 connectivity external provider. In the case of MetaMask
+ * this is the object injected into `window.ethereum`.
+ *
+ * @param chainSpec The full specification of the chain to switch to or add.
+ *
+ * @returns Object with a single `added` field indicating whether the chain was
+ * switched to or added. An exception is thrown if the operation is unsucessful
+ * (e.g. the user rejects the request in the wallet).
+ */
 export async function switchOrAddChain(
 	ethereum: ethers.providers.ExternalProvider,
 	chainSpec: ChainSpec
