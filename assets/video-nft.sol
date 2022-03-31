@@ -1,5 +1,9 @@
-// contracts/4_ERC721.sol
 // SPDX-License-Identifier: MIT
+
+// This file is here only for source code reference of the default ERC721
+// contract deployed by Livepeer. It is not currently used by this repository
+// in any way.
+
 pragma solidity ^0.8.0;
 
 import '@openzeppelin/contracts/token/ERC721/ERC721.sol';
