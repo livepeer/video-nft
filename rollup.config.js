@@ -40,7 +40,7 @@ export default [
 	},
 	// cli
 	{
-		input: 'src/cli.ts',
+		input: 'src/cli/index.ts',
 		external: [
 			'axios',
 			'ethers',

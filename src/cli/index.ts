@@ -1,9 +1,9 @@
 import fs from 'fs';
 import inquirer from 'inquirer';
 
-import parseCli from './cli-args';
-import { Asset } from './types/schema';
-import { VideoNFT } from './video-nft';
+import parseCli from './args';
+import { Asset } from '../types/schema';
+import { VideoNFT } from '../video-nft';
 
 async function videoNft() {
 	const args = await parseCli();

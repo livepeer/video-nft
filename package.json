@@ -40,9 +40,9 @@
 		"prepare": "yarn clean && yarn format && yarn build",
 		"build": "yarn build:rollup && yarn build:docs",
 		"build:rollup": "rollup -c",
-		"build:docs": "typedoc --out ./dist/docs src/*.ts",
+		"build:docs": "typedoc",
 		"dev": "rollup -c -w",
-		"dev:docs": "watch-http-server ./dist/docs & typedoc --watch --preserveWatchOutput --out ./dist/docs src/*.ts",
+		"dev:docs": "watch-http-server ./dist/docs & typedoc --watch --preserveWatchOutput",
 		"start": "yarn build && ./bin/video-nft",
 		"format": "prettier --write \"./**/*.{ts,js,json}\"",
 		"clean": "rm -rf ./dist"

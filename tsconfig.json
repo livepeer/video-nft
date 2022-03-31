@@ -72,5 +72,15 @@
 		/* Advanced Options */
 		"skipLibCheck": true /* Skip type checking of declaration files. */,
 		"forceConsistentCasingInFileNames": true /* Disallow inconsistently-cased references to the same file. */
+	},
+	"typedocOptions": {
+		"entryPoints": [
+			"src/index.ts",
+			"src/chains.ts",
+			"src/video-nft.ts",
+			"src/api.ts",
+			"src/transcode.ts"
+		],
+		"out": "./dist/docs"
 	}
 }

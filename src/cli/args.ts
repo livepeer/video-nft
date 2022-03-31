@@ -5,7 +5,7 @@ import inquirer from 'inquirer';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 
-import { prodApiEndpoint } from './api';
+import { prodApiEndpoint } from '../api';
 
 type Camel<T extends string> = T extends `${infer Left}-${infer Right}`
 	? Camel<`${Left}${Capitalize<Right>}`>
