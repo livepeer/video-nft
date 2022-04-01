@@ -77,7 +77,7 @@
 		"entryPoints": [
 			"src/index.ts",
 			"src/chains.ts",
-			"src/minter.ts",
+			"src/mint.ts",
 			"src/api.ts",
 			"src/transcode.ts"
 		],
