@@ -7,7 +7,7 @@ import videonft, { Asset } from '..';
 async function videoNft() {
 	const args = await parseCli();
 	const { apiKey, apiEndpoint: endpoint } = args;
-	const sdk = new videonft.Minter({
+	const sdk = new videonft.MinterApi({
 		auth: { apiKey },
 		endpoint
 	});
@@ -43,7 +43,7 @@ function printProgress(progress: number) {
 	console.log(` - progress: ${100 * progress}%`);
 }
 
-async function maybeTranscode(sdk: videonft.Minter, asset: Asset) {
+async function maybeTranscode(sdk: videonft.MinterApi, asset: Asset) {
 	const { possible, desiredProfile } = sdk.checkNftNormalize(asset);
 	if (!possible || !desiredProfile) {
 		if (!possible) {

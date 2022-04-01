@@ -6,6 +6,11 @@ import { getDesiredBitrate, makeProfile } from './transcode';
 import { Asset, FfmpegProfile } from './types/schema';
 import { getBuiltinChain, toHexChainId } from './chains';
 
+/**
+ * Representation of either an `ethers` JSON RPC provider or the arguments
+ * required for creating one. The `window.ethereum` object injected by MetaMask
+ * is an acceptable value for this.
+ */
 export type EthereumOrProvider =
 	| ethers.providers.ExternalProvider
 	| ethers.providers.JsonRpcFetchFunc
@@ -18,67 +23,59 @@ const asJsonRpcProvider = (ethOrPrv?: EthereumOrProvider) =>
 		? ethOrPrv
 		: new ethers.providers.Web3Provider(ethOrPrv);
 
+/**
+ * Some helpful information about a newly minted NFT.
+ */
 export type MintedNftInfo = {
+	/**
+	 * The ID of the minted NFT which can be used to fetch information about it in
+	 * the ERC-721 contract. Will only be available if the NFT contract emits a
+	 * `Mint` event compatible with the {@link videoNftAbi}
+	 */
 	tokenId?: number;
+	/**
+	 * Helpful links about the NFT in OpenSea. Will only be available when using a
+	 * {@link chains | built-in chain} for which we have the OpenSea parameters.
+	 */
 	opensea?: {
 		tokenUrl?: string;
 		contractUrl: string;
 	};
 };
 
+/**
+ * The ABI for the required interface that the NFT smart contract should
+ * implement to be compatible with this SDK. Represented in ethers'
+ * {@link https://docs.ethers.io/v5/api/utils/abi/formats/#abi-formats--human-readable-abi | human-readable ABI format}.
+ *
+ * @example
+ * This can also be represented by the following Solidity interface:
+ *
+ * ```java
+ * interface IVideoNFT {
+ *    function mint(address owner, string memory tokenURI)
+ *        public
+ *        returns (uint256);
+ *
+ *    event Mint(
+ *        address indexed sender,
+ *        address indexed owner,
+ *        string tokenURI,
+ *        uint256 tokenId
+ *    );
+ * }
+ * ```
+ */
 export const videoNftAbi = [
 	'event Mint(address indexed sender, address indexed owner, string tokenURI, uint256 tokenId)',
 	'function mint(address owner, string tokenURI) returns (uint256)'
 ] as const;
 
-export class Minter {
-	private ethProvider?: ethers.providers.JsonRpcProvider;
-	private chainId: string;
+export class MinterApi {
 	private api: VodApi;
 
-	constructor(
-		api?: { auth?: ApiAuthentication; endpoint?: string },
-		web3?: {
-			ethereum: EthereumOrProvider;
-			chainId: string | number;
-		}
-	) {
-		this.api = new VodApi(api?.auth, api?.endpoint);
-		this.ethProvider = asJsonRpcProvider(web3?.ethereum);
-		// The chainId would not be really necessary since we can get it from the
-		// provider. But the provider explodes if the chain changes, so we force
-		// users to send the chainId here so it's clear they need to recreate
-		// the SDK instance if the chain changes.
-		this.chainId = web3?.chainId ? toHexChainId(web3.chainId) : '';
-	}
-
-	async createNft(args: {
-		assetName: string;
-		skipNormalize: boolean;
-		nftMetadata: string;
-		mint: {
-			contractAddress?: string;
-			to?: string;
-		};
-	}) {
-		const file = await this.pickFile();
-		let asset = await this.createAsset(args.assetName, file);
-		if (!args.skipNormalize) {
-			asset = await this.nftNormalize(asset);
-		}
-		const ipfsInfo = await this.exportToIPFS(asset.id, args.nftMetadata);
-		if (!args.mint || !this.ethProvider) {
-			return null;
-		}
-		const {
-			mint: { contractAddress, to }
-		} = args;
-		const tx = await this.mintNft(
-			ipfsInfo?.nftMetadataUrl ?? '',
-			contractAddress,
-			to
-		);
-		return this.getMintedNftInfo(tx);
+	constructor(api: { auth?: ApiAuthentication; endpoint?: string }) {
+		this.api = new VodApi(api.auth, api.endpoint);
 	}
 
 	async pickFile() {
@@ -162,6 +159,23 @@ export class Minter {
 		task = await this.api.waitTask(task, reportProgress);
 		return task.output?.export?.ipfs;
 	}
+}
+
+export class MinterWeb3 {
+	private ethProvider?: ethers.providers.JsonRpcProvider;
+	private chainId: string;
+
+	constructor(web3: {
+		ethereum: EthereumOrProvider;
+		chainId: string | number;
+	}) {
+		this.ethProvider = asJsonRpcProvider(web3.ethereum);
+		// The chainId would not be really necessary since we can get it from the
+		// provider. But the provider explodes if the chain changes, so we force
+		// users to send the chainId here so it's clear they need to recreate
+		// the SDK instance if the chain changes.
+		this.chainId = toHexChainId(web3.chainId);
+	}
 
 	async mintNft(
 		tokenUri: string,
@@ -220,5 +234,63 @@ export class Minter {
 			};
 		}
 		return info;
+	}
+}
+
+/**
+ * This is the highest-level abstraction of the SDK providing all the utilities
+ * for minting an NFT from a video file.
+ *
+ * @remarks
+ * This class encapsulates both the Livepeer API-related as well as the
+ * web3-related operations. It can also be used for only one or the other (for
+ * example for splitting part of your logic between the frontend and the
+ * backend), in which case you can create
+ */
+export class Minter {
+	public api: MinterApi;
+	public web3: MinterWeb3;
+
+	constructor(
+		api: { auth?: ApiAuthentication; endpoint?: string },
+		web3: {
+			ethereum: EthereumOrProvider;
+			chainId: string | number;
+		}
+	) {
+		this.api = new MinterApi(api);
+		this.web3 = new MinterWeb3(web3);
+	}
+
+	async createNft(args: {
+		assetName: string;
+		skipNormalize: boolean;
+		nftMetadata: string;
+		mint: {
+			contractAddress?: string;
+			to?: string;
+		};
+	}) {
+		const file = await this.api.pickFile();
+		let asset = await this.api.createAsset(args.assetName, file);
+		if (!args.skipNormalize) {
+			asset = await this.api.nftNormalize(asset);
+		}
+		const ipfsInfo = await this.api.exportToIPFS(
+			asset.id,
+			args.nftMetadata
+		);
+		if (!args.mint) {
+			return null;
+		}
+		const {
+			mint: { contractAddress, to }
+		} = args;
+		const tx = await this.web3.mintNft(
+			ipfsInfo?.nftMetadataUrl ?? '',
+			contractAddress,
+			to
+		);
+		return this.web3.getMintedNftInfo(tx);
 	}
 }
