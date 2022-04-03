@@ -121,7 +121,7 @@ export class Uploader {
 	}
 }
 
-export class MinterApi {
+export class Api {
 	public vod: VodApi;
 
 	constructor(api: { auth?: ApiAuthentication; endpoint?: string }) {
@@ -193,7 +193,7 @@ export class MinterApi {
 	}
 }
 
-export class MinterWeb3 {
+export class Web3 {
 	private ethProvider?: ethers.providers.JsonRpcProvider;
 	private chainId: string;
 
@@ -274,15 +274,33 @@ export class MinterWeb3 {
  * for minting an NFT from a video file.
  *
  * @remarks
- * This class encapsulates both the Livepeer API-related as well as the
- * web3-related operations. It can also be used for only one or the other (for
- * example for splitting part of your logic between the frontend and the
- * backend), in which case you can create
+ * Although this class encapsulates all the parts necessary for building a Video
+ * NFT minting app, it serves mostly as an example of what the full minting flow
+ * would look like if performed on a single place. You should likely never use
+ * this from a production application.
+ *
+ * @remarks
+ * On a production app, each part of the flow will likely be in a different part
+ * of your stack. In the most common case:
+ *  * The {@link Uploader} will be used the closest to your users, where they
+ *    provide the files and upload them to some URL.
+ *  * The {@link Api} will be used to call the Livepeer VOD API. Since using the
+ *    API requires using an API key, this should probably stay in a private part
+ *    of your stack like your backend. It can be used and will work from the
+ *    frontend for development purposes anyway, or if you configure your backend
+ *    as a proxy to the API that injects the API key into the request. See
+ *    {@link https://github.com/victorges/livepeer-web-api-proxy | Livepeer Web API Proxy}
+ *    for a sample project for that.
+ *  * The {@link Web3} will be used to interact with the Ethereum-compatible
+ *    blockchain. It is most commonly used from the browser, connecting to your
+ *    users' web3 wallet like MetaMask. It can also be used from the backend if
+ *    you'd prefer to mint all the NFTs yourself, maybe with a custom contract
+ *    from which you can mint them to your users' addresses directly.
  */
-export class Minter {
+export class FullMinter {
 	public uploader: Uploader;
-	public api: MinterApi;
-	public web3: MinterWeb3;
+	public api: Api;
+	public web3: Web3;
 
 	constructor(
 		api: { auth?: ApiAuthentication; endpoint?: string },
@@ -292,8 +310,8 @@ export class Minter {
 		}
 	) {
 		this.uploader = new Uploader();
-		this.api = new MinterApi(api);
-		this.web3 = new MinterWeb3(web3);
+		this.api = new Api(api);
+		this.web3 = new Web3(web3);
 	}
 
 	async createNft(args: {
