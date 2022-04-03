@@ -7,20 +7,16 @@ import videonft, { Asset } from '..';
 async function videoNft() {
 	const args = await parseCli();
 	const { apiKey, apiEndpoint: endpoint } = args;
+	const uploader = new videonft.Uploader();
 	const sdk = new videonft.MinterApi({
 		auth: { apiKey },
 		endpoint
 	});
 
-	let file: fs.ReadStream | null = null;
-	let asset: Asset;
-	try {
-		file = fs.createReadStream(args.filename);
+	let asset = await uploader.useFile(args.filename, file => {
 		printStep('Uploading file...');
-		asset = await sdk.createAsset(args.assetName, file, printProgress);
-	} finally {
-		file?.close();
-	}
+		return sdk.createAsset(args.assetName, file, printProgress);
+	});
 	asset = await maybeTranscode(sdk, asset);
 
 	printStep('Starting export...');

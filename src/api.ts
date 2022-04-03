@@ -9,6 +9,43 @@ export * from './types/schema';
  */
 export const prodApiEndpoint = 'https://livepeer.com';
 
+const fileUploadClient = axios.create({
+	maxContentLength: Infinity,
+	maxBodyLength: Infinity,
+	maxRedirects: 0
+});
+
+async function makeRequest<T>(
+	client: AxiosInstance,
+	method: Method,
+	url: string,
+	data?: any,
+	additionalConfig?: AxiosRequestConfig<any>
+) {
+	try {
+		const res = await client.request({
+			...additionalConfig,
+			method,
+			url,
+			data
+		});
+		return res.data as T;
+	} catch (err: any) {
+		if (!axios.isAxiosError(err) || !err.response) {
+			throw err;
+		}
+		const { status, statusText, data } = err.response;
+		let msg = JSON.stringify(data);
+		if (Array.isArray(data?.errors) && data.errors.length > 0) {
+			msg = data.errors[0];
+		}
+
+		throw new Error(
+			`Request to ${url} failed (${status} ${statusText}): ${msg}`
+		);
+	}
+}
+
 type ExportTaskParams = NonNullable<Task['params']>['export'];
 
 /**
@@ -68,10 +105,7 @@ export class VodApi {
 					: 'jwt' in auth
 					? `JWT ${auth.jwt}`
 					: ''
-			},
-			maxContentLength: Infinity,
-			maxBodyLength: Infinity,
-			maxRedirects: 0
+			}
 		});
 		this.client.interceptors.response.use(res => {
 			if (res.status >= 300) {
@@ -173,17 +207,17 @@ export class VodApi {
 	 * `asset` and `task` objects returned by {@link requestUploadUrl} for updates
 	 * on the file processing.
 	 */
-	async uploadFile(
+	static async uploadFile(
 		url: string,
 		content: File | NodeJS.ReadableStream,
-		mimeType?: string,
-		reportProgress?: (progress: number) => void
+		reportProgress?: (progress: number) => void,
+		mimeType?: string
 	): Promise<void> {
 		const defaultMimeType =
 			typeof File !== 'undefined' && content instanceof File
 				? content.type
 				: 'application/octet-stream';
-		return this.makeRequest('put', url, content, {
+		return makeRequest(fileUploadClient, 'put', url, content, {
 			headers: {
 				contentType: mimeType || defaultMimeType
 			},
@@ -283,33 +317,6 @@ export class VodApi {
 		return task;
 	}
 
-	private async makeRequest<T>(
-		method: Method,
-		url: string,
-		data?: any,
-		additionalConfig?: AxiosRequestConfig<any>
-	) {
-		try {
-			const res = await this.client.request({
-				...additionalConfig,
-				method,
-				url,
-				data
-			});
-			return res.data as T;
-		} catch (err: any) {
-			if (!axios.isAxiosError(err) || !err.response) {
-				throw err;
-			}
-			const { status, statusText, data } = err.response;
-			let msg = JSON.stringify(data);
-			if (Array.isArray(data.errors) && data.errors.length > 0) {
-				msg = data.errors[0];
-			}
-
-			throw new Error(
-				`Request to ${url} failed (${status} ${statusText}): ${msg}`
-			);
-		}
-	}
+	private makeRequest = <T>(method: Method, url: string, data?: any) =>
+		makeRequest<T>(this.client, method, url, data);
 }

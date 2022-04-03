@@ -1,4 +1,5 @@
 import { ethers } from 'ethers';
+import fs from 'fs';
 
 import { VodApi, ApiAuthentication } from './api';
 import { fileOpen } from 'browser-fs-access';
@@ -71,15 +72,11 @@ export const videoNftAbi = [
 	'function mint(address owner, string tokenURI) returns (uint256)'
 ] as const;
 
-export class MinterApi {
-	private api: VodApi;
+const isBrowser = typeof window !== 'undefined';
 
-	constructor(api: { auth?: ApiAuthentication; endpoint?: string }) {
-		this.api = new VodApi(api.auth, api.endpoint);
-	}
-
+export class Uploader {
 	async pickFile() {
-		if (typeof window === 'undefined') {
+		if (!isBrowser) {
 			throw new Error('pickFile is only supported in the browser');
 		}
 		const { handle } = await fileOpen({
@@ -94,21 +91,56 @@ export class MinterApi {
 		return file;
 	}
 
+	openFile(name: string) {
+		if (isBrowser) {
+			throw new Error('openFile is only supported in node.js');
+		}
+		return fs.createReadStream(name);
+	}
+
+	async useFile<T>(
+		name: string,
+		handler: (file: fs.ReadStream) => Promise<T>
+	) {
+		let file: fs.ReadStream | null = null;
+		try {
+			file = this.openFile(name);
+			return await handler(file);
+		} finally {
+			file?.close();
+		}
+	}
+
+	uploadFile(
+		url: string,
+		content: File | fs.ReadStream,
+		reportProgress?: (progress: number) => void,
+		mimeType?: string
+	) {
+		return VodApi.uploadFile(url, content, reportProgress, mimeType);
+	}
+}
+
+export class MinterApi {
+	public vod: VodApi;
+
+	constructor(api: { auth?: ApiAuthentication; endpoint?: string }) {
+		this.vod = new VodApi(api.auth, api.endpoint);
+	}
+
 	async createAsset(
 		name: string,
-		content: File | NodeJS.ReadableStream,
+		content: File | fs.ReadStream,
 		reportProgress: (progress: number) => void = () => {}
 	) {
 		const {
 			url: uploadUrl,
 			asset: { id: assetId },
 			task
-		} = await this.api.requestUploadUrl(name);
-		await this.api.uploadFile(uploadUrl, content, undefined, p =>
-			reportProgress(p / 2)
-		);
-		await this.api.waitTask(task, p => reportProgress(0.5 + p / 2));
-		return await this.api.getAsset(assetId);
+		} = await this.vod.requestUploadUrl(name);
+		await VodApi.uploadFile(uploadUrl, content, p => reportProgress(p / 2));
+		await this.vod.waitTask(task, p => reportProgress(0.5 + p / 2));
+		return await this.vod.getAsset(assetId);
 	}
 
 	checkNftNormalize(asset: Asset) {
@@ -136,13 +168,13 @@ export class MinterApi {
 			return asset;
 		}
 
-		const transcode = await this.api.transcodeAsset(
+		const transcode = await this.vod.transcodeAsset(
 			asset.id,
 			`${asset.name} (${desiredProfile.name})`,
 			desiredProfile
 		);
-		await this.api.waitTask(transcode.task, reportProgress);
-		return await this.api.getAsset(transcode.asset.id);
+		await this.vod.waitTask(transcode.task, reportProgress);
+		return await this.vod.getAsset(transcode.asset.id);
 	}
 
 	async exportToIPFS(
@@ -153,10 +185,10 @@ export class MinterApi {
 		if (typeof nftMetadata === 'string') {
 			nftMetadata = JSON.parse(nftMetadata) as Record<string, any>;
 		}
-		let { task } = await this.api.exportAsset(assetId, {
+		let { task } = await this.vod.exportAsset(assetId, {
 			ipfs: { nftMetadata }
 		});
-		task = await this.api.waitTask(task, reportProgress);
+		task = await this.vod.waitTask(task, reportProgress);
 		return task.output?.export?.ipfs;
 	}
 }
@@ -248,6 +280,7 @@ export class MinterWeb3 {
  * backend), in which case you can create
  */
 export class Minter {
+	public uploader: Uploader;
 	public api: MinterApi;
 	public web3: MinterWeb3;
 
@@ -258,6 +291,7 @@ export class Minter {
 			chainId: string | number;
 		}
 	) {
+		this.uploader = new Uploader();
 		this.api = new MinterApi(api);
 		this.web3 = new MinterWeb3(web3);
 	}
@@ -271,7 +305,7 @@ export class Minter {
 			to?: string;
 		};
 	}) {
-		const file = await this.api.pickFile();
+		const file = await this.uploader.pickFile();
 		let asset = await this.api.createAsset(args.assetName, file);
 		if (!args.skipNormalize) {
 			asset = await this.api.nftNormalize(asset);
