@@ -74,7 +74,37 @@ export const videoNftAbi = [
 
 const isBrowser = typeof window !== 'undefined';
 
+/**
+ * Provides filesystem-access abstractions for the browser and node, and helpers
+ * for uploading them to the Livepeer API for creating the NFTs.
+ *
+ * @remarks
+ * In the **browser**: you would typically use the {@link pickFile} method for
+ * opening a file picker and then {@link uploadFile} for sending the file
+ * contents to a URL obtained via {@link Api.requestUploadUrl}.
+ *
+ * @remarks
+ * In **node.js**: you should use {@link openFile} or {@link useFile} instead,
+ * already passing the full path of the file that the user should have provided
+ * to your application somehow. After that, you can use the same
+ * {@link uploadFile} method to upload the file contents to the Livepeer API.
+ */
 export class Uploader {
+	/**
+	 * Browser-only: Opens the file picker from the operating system for the user
+	 * to select a video file to upload.
+	 *
+	 * @remarks
+	 * This method is only supported in the browser. It will throw an error if
+	 * called from a different environment like node.js.
+	 *
+	 * @remarks
+	 * The Livepeer VOD API currently only supports MP4 as a container format, so
+	 * the file picker will only allow selecting files with the .mp4 extension.
+	 *
+	 * @returns A promise that will be resolved with the `File` that the
+	 * user picks in the file picker.
+	 */
 	async pickFile() {
 		if (!isBrowser) {
 			throw new Error('pickFile is only supported in the browser');
@@ -82,7 +112,7 @@ export class Uploader {
 		const { handle } = await fileOpen({
 			description: 'MP4 Video files',
 			mimeTypes: ['video/mp4'],
-			extensions: ['.mp4', '.mov', '.m4v']
+			extensions: ['.mp4']
 		});
 		const file = await handle?.getFile();
 		if (!file) {
@@ -91,26 +121,76 @@ export class Uploader {
 		return file;
 	}
 
-	openFile(name: string) {
+	/**
+	 * Node-only: Opens the file at the given path for reading.
+	 *
+	 * @remarks
+	 * This method is only supported in node.js. It will throw an error if called
+	 * from a different environment like the browser.
+	 *
+	 * @param path The full path of the file to open.
+	 *
+	 * @returns A `fs.ReadStream` with the file contents.
+	 */
+	openFile(path: string) {
 		if (isBrowser) {
 			throw new Error('openFile is only supported in node.js');
 		}
-		return fs.createReadStream(name);
+		return fs.createReadStream(path);
 	}
 
+	/**
+	 * Node-only: Opens a file for reading and passes it to the given `handler`,
+	 * closing the read stream as soon as the `handler` is done.
+	 *
+	 * @remarks
+	 * This method is only supported in node.js. It will throw an error if called
+	 * from a different environment like the browser.
+	 *
+	 * @remarks
+	 * This is only a helpful abstraction on top of {@link openFile} so you don't
+	 * need to handle the `fs.ReadStream` lifecycle yourself.
+	 *
+	 * @param path The full path of the file to open.
+	 *
+	 * @param handler A function that will be called with the `fs.ReadStream`. If
+	 * it returns a promise, the file read stream will only be closed when the
+	 * promise is resolved.
+	 *
+	 * @returns The same value that was returned by the handler, maybe wrapped in
+	 * a promise.
+	 */
 	async useFile<T>(
-		name: string,
-		handler: (file: fs.ReadStream) => Promise<T>
+		path: string,
+		handler: (file: fs.ReadStream) => PromiseLike<T> | T
 	) {
+		if (isBrowser) {
+			throw new Error('useFile is only supported in node.js');
+		}
 		let file: fs.ReadStream | null = null;
 		try {
-			file = this.openFile(name);
+			file = this.openFile(path);
 			return await handler(file);
 		} finally {
 			file?.close();
 		}
 	}
 
+	/**
+	 * Uploads a file to the Livepeer API using a direct upload URL obtained via
+	 * {@link Api.requestUploadUrl}.
+	 *
+	 * @remarks
+	 * This is simply a proxy to {@link VodApi.uploadFile}, exposed here as a
+	 * helper so you don't need to interact with the {@link VodApi} class directly
+	 * as well.
+	 *
+	 * @param url The direct upload URL obtained via {@link Api.requestUploadUrl}.
+	 *
+	 * @param content The file contents to upload.
+	 *
+	 * @returns A promise that will be completed when the upload is done.
+	 */
 	uploadFile(
 		url: string,
 		content: File | fs.ReadStream,
@@ -128,17 +208,24 @@ export class Api {
 		this.vod = new VodApi(api.auth, api.endpoint);
 	}
 
+	requestUploadUrl(name: string) {
+		return this.vod.requestUploadUrl(name);
+	}
+
 	async createAsset(
 		name: string,
 		content: File | fs.ReadStream,
 		reportProgress: (progress: number) => void = () => {}
 	) {
+		const uploader = new Uploader();
 		const {
 			url: uploadUrl,
 			asset: { id: assetId },
 			task
-		} = await this.vod.requestUploadUrl(name);
-		await VodApi.uploadFile(uploadUrl, content, p => reportProgress(p / 2));
+		} = await this.requestUploadUrl(name);
+		await uploader.uploadFile(uploadUrl, content, p =>
+			reportProgress(p / 2)
+		);
 		await this.vod.waitTask(task, p => reportProgress(0.5 + p / 2));
 		return await this.vod.getAsset(assetId);
 	}

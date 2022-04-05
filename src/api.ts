@@ -197,15 +197,16 @@ export class VodApi {
 	 * @param url The url returned by {@link requestUploadUrl}.
 	 * @param content The content of the file to upload. A `File` from the browser
 	 * or a `ReadableStream` from node.js.
-	 * @param mimeType An optional `mimeType` for the file. Defaults to
-	 * `octet-stream` and exact type will be detected automatically later.
 	 * @param reportProgress An optional callback that will be called with the
 	 * upload progress, useful for giving some UI feedback to users. This is
 	 * currently only supported from the browser.
+	 * @param mimeType An optional `mimeType` for the file. Defaults to
+	 * `octet-stream` and exact type will be detected automatically later.
 	 *
-	 * @returns Nothing. Will throw an exception on any error. Refer back to the
-	 * `asset` and `task` objects returned by {@link requestUploadUrl} for updates
-	 * on the file processing.
+	 * @returns A promise that will be completed when the upload is done. Will
+	 * throw an exception on any error. Refer back to the `asset` and `task`
+	 * objects returned by {@link requestUploadUrl} for updates on the file
+	 * processing.
 	 */
 	static async uploadFile(
 		url: string,
