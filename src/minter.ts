@@ -1,3 +1,35 @@
+/**
+ * This module provides the highest-level abstractions of the SDK with all the
+ * utilities for minting an NFT from a video file.
+ *
+ * @remarks
+ * On a production app, each part of the flow will likely be in a different part
+ * of your stack. In the most common case:
+ *  * The {@link Uploader} will be used the closest to your users, where they
+ *    provide the files and upload them to a URL provided by the Livepeer API.
+ *  * The {@link Api} will be used to call the Livepeer VOD API. Since using the
+ *    API requires having an API key, this should probably stay in a private
+ *    part of your stack like your backend. It can be used and will work from
+ *    the frontend for development purposes anyway, or if you configure your
+ *    backend as a proxy to the API that injects the API key into the request.
+ *    See
+ *    {@link https://github.com/victorges/livepeer-web-api-proxy | Livepeer Web API Proxy}
+ *    for a sample project of that.
+ *  * The {@link Web3} will be used to interact with the Ethereum-compatible
+ *    blockchain. It is most commonly used from the browser, connecting to your
+ *    users' web3 wallet like MetaMask. It can also be used from the backend if
+ *    you'd prefer to mint all the NFTs yourself, maybe with a custom contract
+ *    from which you can mint directly to your users' addresses.
+ *
+ * @remarks
+ * The {@link FullMinter} class encapsulates all of the parts above, but it
+ * serves mostly as an example of what the full minting flow would look like if
+ * performed in a single place. Check its specific documentation for more
+ * details.
+ *
+ * @packageDocumentation
+ */
+
 import { ethers } from 'ethers';
 import fs from 'fs';
 
@@ -357,32 +389,26 @@ export class Web3 {
 }
 
 /**
- * This is the highest-level abstraction of the SDK providing all the utilities
- * for minting an NFT from a video file.
+ * This encapsulates all the parts necessary for creating a Video NFT in a
+ * single environment.
  *
  * @remarks
- * Although this class encapsulates all the parts necessary for building a Video
- * NFT minting app, it serves mostly as an example of what the full minting flow
- * would look like if performed on a single place. You should likely never use
- * this from a production application.
+ * This should be used only as an example of what it would look like if the full
+ * minting flow was performed in a single part of the stack.
  *
  * @remarks
- * On a production app, each part of the flow will likely be in a different part
- * of your stack. In the most common case:
- *  * The {@link Uploader} will be used the closest to your users, where they
- *    provide the files and upload them to some URL.
- *  * The {@link Api} will be used to call the Livepeer VOD API. Since using the
- *    API requires using an API key, this should probably stay in a private part
- *    of your stack like your backend. It can be used and will work from the
- *    frontend for development purposes anyway, or if you configure your backend
- *    as a proxy to the API that injects the API key into the request. See
- *    {@link https://github.com/victorges/livepeer-web-api-proxy | Livepeer Web API Proxy}
- *    for a sample project for that.
- *  * The {@link Web3} will be used to interact with the Ethereum-compatible
- *    blockchain. It is most commonly used from the browser, connecting to your
- *    users' web3 wallet like MetaMask. It can also be used from the backend if
- *    you'd prefer to mint all the NFTs yourself, maybe with a custom contract
- *    from which you can mint them to your users' addresses directly.
+ * You will most likely not use this in a production application, unless:
+ *  * You are OK exposing an API key in the {@link Api} component in your
+ *    frontend. Doing that means that anyone can grab the key from your web page
+ *    and call any Livepeer API on your behalf (even the ones you're not using
+ *    in your app).
+ *  * You are doing the {@link Web3} minting part in your backend. This means
+ *    that you will be calling the Ethereum-compatible blockchain and paying for
+ *    the transactions yourself. The users will likely have less control of what
+ *    is being done as well.
+ *  * Something else that we haven't considered! Do not limit yourself by this
+ *    documentation, but do consider the security and ownership implications of
+ *    any such setup.
  */
 export class FullMinter {
 	public uploader: Uploader;
