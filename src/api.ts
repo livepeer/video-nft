@@ -279,45 +279,6 @@ export class VodApi {
 		);
 	}
 
-	/**
-	 * Higher-level utility for waiting until a task is completed.
-	 *
-	 * @remarks
-	 * This will simply call the `getTask` API repeatedly until the task is either
-	 * successful or failed. For a promise-like API this will also throw an
-	 * exception in case the task is failed.
-	 *
-	 * @param task - The task object that should be waited for.
-	 * @param reportProgress - An optional callback to be called with the progress
-	 * of the running task, which is a number for 0 to 1. Useful for showing some
-	 * UI feedback to users.
-	 *
-	 * @returns The finished `Task` object also containing the task output. Check
-	 * the `output` field for the respective output depending on the task `type`.
-	 */
-	async waitTask(task: Task, reportProgress?: (progress: number) => void) {
-		let lastProgress = 0;
-		while (
-			task.status?.phase !== 'completed' &&
-			task.status?.phase !== 'failed'
-		) {
-			const progress = task.status?.progress;
-			if (progress && progress !== lastProgress) {
-				if (reportProgress) reportProgress(progress);
-				lastProgress = progress;
-			}
-			new Promise(resolve => setTimeout(resolve, 2500));
-			task = await this.getTask(task.id ?? '');
-		}
-
-		if (task.status.phase === 'failed') {
-			throw new Error(
-				`${task.type} task failed. error: ${task.status.errorMessage}`
-			);
-		}
-		return task;
-	}
-
 	private makeRequest = <T>(method: Method, url: string, data?: any) =>
 		makeRequest<T>(this.client, method, url, data);
 }

@@ -33,7 +33,7 @@
 import { ethers } from 'ethers';
 import fs from 'fs';
 
-import { VodApi, ApiAuthentication } from './api';
+import { VodApi, ApiAuthentication, Task } from './api';
 import { fileOpen } from 'browser-fs-access';
 import { getDesiredBitrate, makeProfile } from './transcode';
 import { Asset, FfmpegProfile } from './types/schema';
@@ -225,7 +225,7 @@ export class Uploader {
 	 */
 	uploadFile(
 		url: string,
-		content: File | fs.ReadStream,
+		content: File | NodeJS.ReadableStream,
 		reportProgress?: (progress: number) => void,
 		mimeType?: string
 	) {
@@ -233,20 +233,80 @@ export class Uploader {
 	}
 }
 
+/**
+ * Provides higher-level abstractions on top of the Livepeer VOD API focused on
+ * the NFT-minting process.
+ *
+ * @remarks
+ * This class requires an API key to be used for calling the Livepeer API. As
+ * such, it is most appropriately used in a secure context like a backend server
+ * (even if only acting as a proxy). It can still be used from the browser with
+ * a CORS-enabled API key, but beware that the API key will be exposed for
+ * anyone that grabs it from your web page.
+ */
 export class Api {
 	public vod: VodApi;
 
+	/**
+	 * Creates a new `Api` instance with the given API configuration.
+	 *
+	 * @remarks
+	 * If you're running a backend proxy like
+	 * {@link https://github.com/victorges/livepeer-web-api-proxy | Livepeer Web API Proxy}
+	 * you can pass an empty configuration to the API here. The client will use
+	 * the same endpoint as the current page by default and won't include any
+	 * credentials in the requests. All API paths are prefixed with `/api`.
+	 *
+	 * @param api The parameters to pass to the Livepeer API client.
+	 */
 	constructor(api: { auth?: ApiAuthentication; endpoint?: string }) {
 		this.vod = new VodApi(api.auth, api.endpoint);
 	}
 
+	/**
+	 * Request a direct upload URL for a file to be uploaded to the API.
+	 *
+	 * @remarks
+	 * This is simply a proxy to {@link VodApi.requestUploadUrl}, exposed here as
+	 * a helper so you don't need to interact with the {@link VodApi} class
+	 * directly as well.
+	 *
+	 * @param name The name of the asset that will be created.
+	 *
+	 * @returns An object with the `url` and created `asset` and `task`. The
+	 * `asset` and `task` can be used to track the progress of the upload (see
+	 * {@link waitTask}).
+	 */
 	requestUploadUrl(name: string) {
 		return this.vod.requestUploadUrl(name);
 	}
 
+	/**
+	 * Utility for performing the full file upload process for creating an asset
+	 * in the Livepeer API.
+	 *
+	 * @remarks
+	 * This assumes you are calling both {@link requestUploadUrl} and
+	 * {@link uploadFile} from the same place. In the most efficient scenario, you
+	 * would only create an upload URL from your backend, forward it to your
+	 * frontend and make the upload directly from the frontend.
+	 *
+	 * This one can be used to get started, it will only be either: more
+	 * inefficient in case you pipe the whole file contents through your backend,
+	 * or; insecure if you call the Livepeer API from the frontend.
+	 *
+	 * @param name The name of the asset that will be created.
+	 *
+	 * @param content The content of the file to be uploaded.
+	 *
+	 * @param reportProgress A function that will be called periodically with the
+	 * progress of the upload. Parts of it only work in the browser.
+	 *
+	 * @returns The newly created and already processed/populated {@link Asset}.
+	 */
 	async createAsset(
 		name: string,
-		content: File | fs.ReadStream,
+		content: File | NodeJS.ReadableStream,
 		reportProgress: (progress: number) => void = () => {}
 	) {
 		const uploader = new Uploader();
@@ -258,14 +318,37 @@ export class Api {
 		await uploader.uploadFile(uploadUrl, content, p =>
 			reportProgress(p / 2)
 		);
-		await this.vod.waitTask(task, p => reportProgress(0.5 + p / 2));
+		await this.waitTask(task, p => reportProgress(0.5 + p / 2));
 		return await this.vod.getAsset(assetId);
 	}
 
-	checkNftNormalize(asset: Asset) {
+	/**
+	 * Checks if the specified asset requires any special processing before being
+	 * minted as an NFT.
+	 *
+	 * @remarks
+	 * This is an optional function call, you can also just call
+	 * {@link nftNormalize} directly to have the video asset processed in the best
+	 * way possible for being minted as an NFT. This function is useful only if
+	 * you want to show some feedback to the user, like asking if they want to
+	 * mint the asset as is or process it first.
+	 *
+	 * @param asset The asset to check. It must have been fully populated with the
+	 * video metadata, meaning that the {@link Task} that created it must have
+	 * already completed.
+	 *
+	 * @param sizeLimit The size limit to shrink the asset to. Defaults to 100MB.
+	 *
+	 * @returns An object with 2 fields `possible` and `desiredProfile`. The
+	 * `possible` field is a boolean indicating if the asset can actually be
+	 * normalized or not, i.e. if there is any acceptable bitrate to reduce its
+	 * size below the `sizeLimit`. The `desiredProfile` field is the video profile
+	 * that should be used to transcode the asset, if `possible`.
+	 */
+	checkNftNormalize(asset: Asset, sizeLimit?: number) {
 		let desiredProfile: FfmpegProfile | null = null;
 		try {
-			const desiredBitrate = getDesiredBitrate(asset);
+			const desiredBitrate = getDesiredBitrate(asset, sizeLimit);
 			if (desiredBitrate) {
 				desiredProfile = makeProfile(asset, desiredBitrate);
 			}
@@ -278,11 +361,38 @@ export class Api {
 		}
 	}
 
+	/**
+	 * Normalizes the specified asset fot the best possible NFT.
+	 *
+	 * @remarks
+	 * Normalization means transcoding the asset to a better suitable format,
+	 * codec and quality. Currently, this means ensuring that the asset fits
+	 * within the limit of some NFT marketplaces like OpenSea, which has a strict
+	 * {@link
+	 * https://support.opensea.io/hc/en-us/articles/360061943574-What-file-formats-can-I-use-to-make-NFTs-Is-there-a-maximum-size-
+	 * | file size limit of 100 MB}. Check the {@link getDesiredBitrate} and
+	 * {@link makeProfile} for more information on how that calculation is made.
+	 *
+	 * @param asset The asset to normalize. It must have been fully populated with
+	 * the video metadata, meaning that the {@link Task} that created it must have
+	 * already completed.
+	 *
+	 * @param reportProgress A function that will be called periodically with the
+	 * progress of the transcode task.
+	 *
+	 * @param sizeLimit The size limit to shrink the asset to. Defaults to 100MB.
+	 *
+	 * @returns The new asset created with the normalized video spec.
+	 */
 	async nftNormalize(
 		asset: Asset,
-		reportProgress?: (progress: number) => void
+		reportProgress?: (progress: number) => void,
+		sizeLimit?: number
 	) {
-		const { possible, desiredProfile } = this.checkNftNormalize(asset);
+		const { possible, desiredProfile } = this.checkNftNormalize(
+			asset,
+			sizeLimit
+		);
 		if (!possible || !desiredProfile) {
 			return asset;
 		}
@@ -292,10 +402,37 @@ export class Api {
 			`${asset.name} (${desiredProfile.name})`,
 			desiredProfile
 		);
-		await this.vod.waitTask(transcode.task, reportProgress);
+		await this.waitTask(transcode.task, reportProgress);
 		return await this.vod.getAsset(transcode.asset.id);
 	}
 
+	/**
+	 * Exports an asset to decentralized storage (IPFS).
+	 *
+	 * @remarks
+	 * This actually exports 2 files to IPFS:
+	 *  * One with the raw contents of the video asset
+	 *  * Another one with the NFT metadata in IPFS pointing to the above file. So
+	 *    you can mint the NFT directly with the URL of this file as the
+	 *    `tokenUri` of the ERC-721 contract.
+	 *
+	 * @remarks
+	 * You can also customize the NFT metadata created by passing the
+	 * `nftMetadata` argument to this function. This will be deep merged with the
+	 * default metadata created for the NFT.
+	 *
+	 * @param assetId The ID of the asset to export.
+	 *
+	 * @param nftMetadata The custom overrides for fields in the NFT metadata. You
+	 * can change the value of any field by specifying it here, or delete any
+	 * default field by specifying `null`.
+	 *
+	 * @param reportProgress A function that will be called periodically with the
+	 * progress of the export task.
+	 *
+	 * @returns The information about the files exported to IPFS. Use the
+	 * `nftMetadataUrl` field as the `tokenUri` for minting the NFT of the asset.
+	 */
 	async exportToIPFS(
 		assetId: string,
 		nftMetadata?: string | Record<string, any>,
@@ -307,8 +444,48 @@ export class Api {
 		let { task } = await this.vod.exportAsset(assetId, {
 			ipfs: { nftMetadata }
 		});
-		task = await this.vod.waitTask(task, reportProgress);
-		return task.output?.export?.ipfs;
+		task = await this.waitTask(task, reportProgress);
+		const ipfs = task.output?.export?.ipfs;
+		return ipfs as NonNullable<typeof ipfs>;
+	}
+
+	/**
+	 * Wait until a specified task is completed.
+	 *
+	 * @remarks
+	 * This will simply call the `getTask` API repeatedly until the task is either
+	 * successful or failed. For a promise-like API this will also throw an
+	 * exception in case the task is failed.
+	 *
+	 * @param task - The task object that should be waited for.
+	 * @param reportProgress - An optional callback to be called with the progress
+	 * of the running task, which is a number for 0 to 1. Useful for showing some
+	 * UI feedback to users.
+	 *
+	 * @returns The finished `Task` object also containing the task output. Check
+	 * the `output` field for the respective output depending on the task `type`.
+	 */
+	async waitTask(task: Task, reportProgress?: (progress: number) => void) {
+		let lastProgress = 0;
+		while (
+			task.status?.phase !== 'completed' &&
+			task.status?.phase !== 'failed'
+		) {
+			const progress = task.status?.progress;
+			if (progress && progress !== lastProgress) {
+				if (reportProgress) reportProgress(progress);
+				lastProgress = progress;
+			}
+			new Promise(resolve => setTimeout(resolve, 2500));
+			task = await this.vod.getTask(task.id ?? '');
+		}
+
+		if (task.status.phase === 'failed') {
+			throw new Error(
+				`${task.type} task failed. error: ${task.status.errorMessage}`
+			);
+		}
+		return task;
 	}
 }
 
