@@ -33,7 +33,7 @@
 import { ethers } from 'ethers';
 import fs from 'fs';
 
-import { VodApi, ApiAuthentication, Task } from './api';
+import { VodApi, ApiAuthentication, Task, ApiOptions } from './api';
 import { fileOpen } from 'browser-fs-access';
 import { getDesiredBitrate, makeProfile } from './transcode';
 import { Asset, FfmpegProfile } from './types/schema';
@@ -257,10 +257,10 @@ export class Api {
 	 * the same endpoint as the current page by default and won't include any
 	 * credentials in the requests. All API paths are prefixed with `/api`.
 	 *
-	 * @param api The parameters to pass to the Livepeer API client.
+	 * @param api The options to pass to the Livepeer API client.
 	 */
-	constructor(api: { auth?: ApiAuthentication; endpoint?: string }) {
-		this.vod = new VodApi(api.auth, api.endpoint);
+	constructor(api: ApiOptions) {
+		this.vod = new VodApi(api);
 	}
 
 	/**
@@ -592,8 +592,16 @@ export class FullMinter {
 	public api: Api;
 	public web3: Web3;
 
+	/**
+	 * Creates a `FullMinter` instance with the provided configurations for the
+	 * {@link Api} and {@link Web3} sub-components.
+	 *
+	 * @param api The configuration for the {@link Api} component.
+	 *
+	 * @param web3 The configuration for the {@link Web3} component.
+	 */
 	constructor(
-		api: { auth?: ApiAuthentication; endpoint?: string },
+		api: ApiOptions,
 		web3: {
 			ethereum: EthereumOrProvider;
 			chainId: string | number;
@@ -604,7 +612,21 @@ export class FullMinter {
 		this.web3 = new Web3(web3);
 	}
 
+	/**
+	 * Demonstrates the entire NFT minting process. Check the source code of this
+	 * function to have a better idea of the whole process.
+	 *
+	 * @remarks
+	 * The `filename` parameter **must** be provided in a node.js environment, and
+	 * **cannot** be provided in a browser environment.
+	 *
+	 * @param args Aggregated arguments for all the functions that are called
+	 * along the process.
+	 *
+	 * @returns	The information about the miunted NFT.
+	 */
 	async createNft(args: {
+		filepath?: string;
 		assetName: string;
 		skipNormalize: boolean;
 		nftMetadata: string;
@@ -613,26 +635,25 @@ export class FullMinter {
 			to?: string;
 		};
 	}) {
-		const file = await this.uploader.pickFile();
+		const file = args.filepath
+			? this.uploader.openFile(args.filepath)
+			: await this.uploader.pickFile();
 		let asset = await this.api.createAsset(args.assetName, file);
 		if (!args.skipNormalize) {
 			asset = await this.api.nftNormalize(asset);
 		}
-		const ipfsInfo = await this.api.exportToIPFS(
+		const { nftMetadataUrl } = await this.api.exportToIPFS(
 			asset.id,
 			args.nftMetadata
 		);
-		if (!args.mint) {
-			return null;
-		}
 		const {
 			mint: { contractAddress, to }
 		} = args;
 		const tx = await this.web3.mintNft(
-			ipfsInfo?.nftMetadataUrl ?? '',
+			nftMetadataUrl ?? '',
 			contractAddress,
 			to
 		);
-		return this.web3.getMintedNftInfo(tx);
+		return await this.web3.getMintedNftInfo(tx);
 	}
 }

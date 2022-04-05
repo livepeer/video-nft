@@ -64,6 +64,24 @@ type ExportTaskParams = NonNullable<Task['params']>['export'];
  */
 export type ApiAuthentication = { apiKey: string } | { jwt: string };
 
+/**
+ * Options for instantiating a new {@link VodApi} client.
+ */
+export type ApiOptions = {
+	/**
+	 * Desired authentication method with the API, defaulting to no authentication
+	 * if not specified. See {@link ApiAuthentication}.
+	 */
+	auth?: ApiAuthentication;
+	/**
+	 * Base endpoint to use when connection to the API. Must include scheme and
+	 * hostname. Defaults to the Livepeer production endpoint if running on a
+	 * backend, or the current origin if running in the browser. All APIs will be
+	 * prefixed with an `/api` path segment.
+	 */
+	endpoint?: string;
+};
+
 const defaultApiEndpoint = typeof window !== 'undefined' ? '' : prodApiEndpoint;
 
 /**
@@ -84,19 +102,12 @@ export class VodApi {
 	/**
 	 * Creates a VodApi instance.
 	 *
-	 * @param auth - Desired authentication method with the API, defaulting to no
-	 * authentication if not specified. See {@link ApiAuthentication}.
-	 * @param apiEndpoint - Base endpoint to use when connection to the API. Must
-	 * include scheme and hostname. Defaults to the Livepeer production endpoint
-	 * if running on a backend, or the current origin if running in the browser.
-	 *
+	 * @param opts - Options for the API client.
 	 */
-	constructor(
-		auth?: ApiAuthentication,
-		apiEndpoint: string = defaultApiEndpoint
-	) {
+	constructor(opts: ApiOptions = {}) {
+		const { auth, endpoint = defaultApiEndpoint } = opts;
 		this.client = axios.create({
-			baseURL: apiEndpoint,
+			baseURL: endpoint,
 			headers: {
 				Authorization: !auth
 					? ''
