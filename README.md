@@ -6,7 +6,9 @@
 [![npm](https://img.shields.io/npm/v/@livepeer/video-nft.svg?style=flat-square)](https://www.npmjs.com/package/@livepeer/video-nft)
 
 
-1-command minting of video NFTs
+SDK for Video NFT minting applications.
+
+Also provides a 1-command NFT minting CLI.
 
 
 ### Table of Contents
