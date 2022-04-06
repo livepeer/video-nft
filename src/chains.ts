@@ -10,15 +10,15 @@
  * used as a default contract with which to mint a Video NFT.
  *
  * @remarks When using a built-in chain you don't need to provide a contract
- * address on the calls to the {@link minter.Minter | Minter} for minting an
+ * address on the calls to the {@link minter.Web3 | Web3 minter} for minting an
  * NFT. You can still provide one anyway if you wish to use your own contract,
  * but it does need to implement the {@link minter.videoNftAbi | Video NFT ABI}
  * for the SDK to work properly.
  *
  * @remarks You can also use custom chains that are not built-in, but you will
  * need always to provide your contract address to the
- * {@link minter.Minter | Minter} functions and handle any NFT marketplace URLs
- * or integrations.
+ * {@link minter.Web3 | Web3 minter} functions and handle any NFT marketplace
+ * URLs or integrations.
  *
  * @packageDocumentation
  */

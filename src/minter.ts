@@ -33,7 +33,7 @@
 import { ethers } from 'ethers';
 import fs from 'fs';
 
-import { VodApi, ApiAuthentication, Task, ApiOptions } from './api';
+import { VodApi, Task, ApiOptions } from './api';
 import { fileOpen } from 'browser-fs-access';
 import { getDesiredBitrate, makeProfile } from './transcode';
 import { Asset, FfmpegProfile } from './types/schema';
@@ -71,7 +71,15 @@ export type MintedNftInfo = {
 	 * {@link chains | built-in chain} for which we have the OpenSea parameters.
 	 */
 	opensea?: {
+		/**
+		 * URL directly to the token page in OpenSea. Might not be available in case
+		 * the token ID is not known.
+		 */
 		tokenUrl?: string;
+		/**
+		 * Search URL for the smart contract, which is aggregated in OpenSea as a
+		 * collection. Can be sent as a best-effort if the token URL is not known.
+		 */
 		contractUrl: string;
 	};
 };
@@ -489,22 +497,90 @@ export class Api {
 	}
 }
 
+/**
+ * Options for creating a {@link Web3} instance.
+ */
+export type Web3Options = {
+	/**
+	 * The blockchain-access provider, either from `ethers` or the wallet.
+	 *
+	 * @remarks
+	 * This can be either an external provider, as exposed as a `window.ethereum`
+	 * object by some web3 wallets like MetaMask or a custom provider created with
+	 * the `ethers` library. You will likely need to instantiate a custom provider
+	 * if you are using this from node.js.
+	 */
+	ethereum: EthereumOrProvider;
+	/**
+	 * The ID of the blockchain that is currently connected.
+	 *
+	 * @remarks
+	 * This would not be really necessary since we can get it from the `ethereum`
+	 * provider but `ethers` library explodes if the chain changes. So we only
+	 * force the `chainId` to be sent here so it's clear that you need to recreate
+	 * the {@link Web3} instance anytime the chain changes. You also need to
+	 * recreate your custom `ethers` provider if you are creating one manually.
+	 */
+	chainId: string | number;
+};
+
+/**
+ * Provides abstractions for interacting with an Ethereum-compatible blockchain
+ * and minting an NFT.
+ *
+ * @remarks
+ * This currently only works with smart contracts compatible with the
+ * {@link videoNftAbi} interface. If you deploy your own contract, you can pass
+ * its address to the minting functions here but it has to implement the
+ * specified interface or not all of the functionality here will work.
+ */
 export class Web3 {
 	private ethProvider?: ethers.providers.JsonRpcProvider;
 	private chainId: string;
 
-	constructor(web3: {
-		ethereum: EthereumOrProvider;
-		chainId: string | number;
-	}) {
+	/**
+	 * Creates a new `Web3` instance with the provided options.
+	 *
+	 * @param web3 Options for the web3 provider.
+	 */
+	constructor(web3: Web3Options) {
 		this.ethProvider = asJsonRpcProvider(web3.ethereum);
-		// The chainId would not be really necessary since we can get it from the
-		// provider. But the provider explodes if the chain changes, so we force
-		// users to send the chainId here so it's clear they need to recreate
-		// the SDK instance if the chain changes.
 		this.chainId = toHexChainId(web3.chainId);
 	}
 
+	/**
+	 * Sends a transaction to the blockchain calling the `mint` function of the
+	 * specified contract.
+	 *
+	 * @remarks
+	 * The `tokenUri` should likely be obtained from a function like
+	 * {@link Api.exportToIPFS} but you can pass any URL here for the NFT. For
+	 * example you can export the asset to IPFS but then create a custom metadata
+	 * file in IPFS in case our current API doesn't work for your use case. We
+	 * only suggest that you use a decentralized and immutable storage like IPFS
+	 * for further reliability of the NFT over time.
+	 *
+	 * @remarks
+	 * The default smart contracts do not allow minting to other addresses. So the
+	 * recipient of the NFT must always be the one that calls the mint
+	 * transaction. Here it means that you should not provide the `to` argument
+	 * and it will be obtained automatically from the provider.
+	 *
+	 * @param tokenUri The URI of the NFT. This is normally the `nftMetadataUrl`
+	 * field returned by {@link Api.exportToIPFS}.
+	 *
+	 * @param contractAddress The address of the smart contract to use. If you're
+	 * using one of the {@link chains | built-in chains} this will default to the
+	 * Livepeer-deployed smart contract so you don't need to provide one.
+	 *
+	 * @param to An optional address for the recipient of the NFT. If using the
+	 * default smart contracts, this must be omited or equal to the address
+	 * sending the transaction.
+	 *
+	 * @returns The receipt of the transaction. Notice that this does not mean
+	 * that the transaction is confirmed. To wait for that and also get the result
+	 * of the minting process, check {@link getMintedNftInfo}.
+	 */
 	async mintNft(
 		tokenUri: string,
 		contractAddress?: string,
@@ -535,6 +611,20 @@ export class Web3 {
 		return await videoNft.mint(owner, tokenUri);
 	}
 
+	/**
+	 * Waits for a mint transaction to be confirmed and returns info about the
+	 * minted NFT.
+	 *
+	 * @remarks
+	 * This is the part of the minting process that relies on the `Mint` event
+	 * from the {@link videoNftAbi}. You can use a contract that does not emit
+	 * such event but you'll not be able to call this function to get the minted
+	 * token ID.
+	 *
+	 * @param tx The transaction receipt as returned by {@link mintNft}.
+	 *
+	 * @returns Information about the just minted NFT.
+	 */
 	async getMintedNftInfo(
 		tx: ethers.ContractTransaction
 	): Promise<MintedNftInfo> {
@@ -623,7 +713,7 @@ export class FullMinter {
 	 * @param args Aggregated arguments for all the functions that are called
 	 * along the process.
 	 *
-	 * @returns	The information about the miunted NFT.
+	 * @returns	Information about the minted NFT.
 	 */
 	async createNft(args: {
 		filepath?: string;
