@@ -10,7 +10,7 @@ const typescript = () => baseTypescript({ useTsconfigDeclarationDir: true });
 export default [
 	// browser-friendly UMD build
 	{
-		input: 'src/index.ts',
+		input: 'src/web.ts',
 		output: {
 			name: 'video-nft',
 			file: pkg.browser,
