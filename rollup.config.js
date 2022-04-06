@@ -1,5 +1,6 @@
 import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
+import minify from 'rollup-plugin-babel-minify';
 import baseTypescript from 'rollup-plugin-typescript2';
 import dts from 'rollup-plugin-dts';
 import pkg from './package.json';
@@ -17,7 +18,15 @@ export default [
 			sourcemap: true
 			// inlineDynamicImports: true
 		},
-		plugins: [resolve(), commonjs(), typescript()]
+		plugins: [
+			resolve(),
+			commonjs(),
+			typescript(),
+			minify({
+				mangle: false,
+				comments: false
+			})
+		]
 	},
 	// CommonJS (for Node) and ES module (for bundlers) build.
 	{
