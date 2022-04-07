@@ -103,7 +103,10 @@ const builtinChains: Record<HexChainId, BuiltinChainInfo> = {
  *
  * @returns Normalized hexadecimal string representing the chain ID.
  */
-export function toHexChainId(chainId: string | number) {
+export function toHexChainId(chainId: string | number): HexChainId {
+	if (chainId == null) {
+		return '' as HexChainId;
+	}
 	return utils.hexValue(chainId) as HexChainId;
 }
 

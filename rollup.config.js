@@ -1,9 +1,12 @@
 import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import json from '@rollup/plugin-json';
+
+import builtins from 'rollup-plugin-node-builtins';
 import minify from 'rollup-plugin-babel-minify';
 import baseTypescript from 'rollup-plugin-typescript2';
 import dts from 'rollup-plugin-dts';
+
 import pkg from './package.json';
 
 const typescript = () => baseTypescript({ useTsconfigDeclarationDir: true });
@@ -17,10 +20,10 @@ export default [
 			file: pkg.browser,
 			format: 'umd',
 			sourcemap: true
-			// inlineDynamicImports: true
 		},
 		plugins: [
-			resolve({ jsnext: true, preferBuiltins: true, browser: true }),
+			builtins(),
+			resolve({ browser: true }),
 			json(),
 			commonjs(),
 			typescript(),
