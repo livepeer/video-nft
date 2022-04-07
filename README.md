@@ -54,10 +54,11 @@ CDN. For now we recommend using it as an ES Module as suggested above.
 
 ## Documentation
 
-Browse the code [documentation](https://livepeer.github.io/video-nft/) online
+Browse the [code documentation](https://livepeer.github.io/video-nft/) online.
 
  - Continue reading this for [Usage](#usage) and [Examples](#examples)
- - For the NFT minting CLI check [this guide](https://livepeer.com/docs/guides/video-nft)
+ - [Use the NFT minting CLI](https://livepeer.com/docs/guides/video-nft)
+ - [Deploy your own ERC-721 contract](https://github.com/camiinthisthang/livepeer-nft#deploy-your-own-erc721-contract)
 
 ## Usage
 
@@ -111,18 +112,17 @@ of the alternatives here.
 
 ### Browser-only
 
-You can use the entire SDK only from the browser. This is useful for hacking
-and/or demonstrating an idea, but has some security implications. Anyone with
-the proper knowledge will be able to snoop the API key from your code or the
-network requests and impersonate you in the Livepeer API.
+You can do the entire minting flow from the browser. This is the quickest way to
+get started, but could have some security implications. Anyone with the proper
+knowledge will be able to snoop the API key from your code or network requests
+and impersonate you in the Livepeer API.
 
-Being aware of these limitations, you can get started like that anyway. You will
-only need to create a CORS-enabled API key in the Livepeer Video Services
-dashboard. Check the documentation on [getting an API
+So it is recommended that you use a CORS-enabled API key with restricted access
+to the API. Check the documentation on [getting an API
 key](https://livepeer.com/docs/guides/start-live-streaming/api-key) for more
 information.
 
-The code below shows a simple example how the whole flow would look like from
+The code below shows a simple example of how the whole flow would look like from
 the browser:
 
 ```js
@@ -152,9 +152,8 @@ async function mintNft(file) {
 ```
 
 It is common to prefer more control over the individual steps of the minting
-process though. You can use it to show some feedback to your user, ask for
+process. You can use it to show some feedback to your user and ask for
 additional information or confirmation. That same example would look like this:
-
 
 ```ts
 async function mintNft() {
@@ -175,9 +174,25 @@ async function mintNft() {
 }
 ```
 
-### Split backend and browser setups
+### Split backend and browser
 
-// TO-DO...
+If you'd rather have the maximum security for your API key, you can create a
+backend to serve as a proxy to the Livepeer API and optionally provide
+higher-level abstractions for all the minting operations.
+
+You can even do the entire flow from the backend as well, including the
+blockchain transaction via the `Web3` helper. On that case, it would not be your
+users doing the minting but you. That means not only you would need to pay for
+the gas costs yourself, but your users would also not own the NFTs they mint.
+You can circumvent that by immediately transferring the minted NFT to the user
+(more gas) or creating a custom contract that allows minting to another address
+in the `mint()` call, but the recommended approach here is to just let your
+users do the minting themselves.
+
+So we suggest you to keep the `Web3` minting part in the browser, close to your
+users.
+
+// WIP...
 
 ## CLI
 
