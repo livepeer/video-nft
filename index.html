@@ -52,10 +52,11 @@ CDN. For now we recommend using it as an ES Module as suggested above.</p>
 <a href="#documentation" id="documentation" style="color: inherit; text-decoration: none;">
   <h2>Documentation</h2>
 </a>
-<p>Browse the code <a href="https://livepeer.github.io/video-nft/">documentation</a> online</p>
+<p>Browse the <a href="https://livepeer.github.io/video-nft/">code documentation</a> online.</p>
 <ul>
 <li>Continue reading this for <a href="#usage">Usage</a> and <a href="#examples">Examples</a></li>
-<li>For the NFT minting CLI check <a href="https://livepeer.com/docs/guides/video-nft">this guide</a></li>
+<li><a href="https://livepeer.com/docs/guides/video-nft">Use the NFT minting CLI</a></li>
+<li><a href="https://github.com/camiinthisthang/livepeer-nft#deploy-your-own-erc721-contract">Deploy your own ERC-721 contract</a></li>
 </ul>
 
 <a href="#usage" id="usage" style="color: inherit; text-decoration: none;">
@@ -115,29 +116,41 @@ of the alternatives here.</p>
 <a href="#browser-only" id="browser-only" style="color: inherit; text-decoration: none;">
   <h3>Browser-only</h3>
 </a>
-<p>You can use the entire SDK only from the browser. This is useful for hacking
-and/or demonstrating an idea, but has some security implications. Anyone with
-the proper knowledge will be able to snoop the API key from your code or the
-network requests and impersonate you in the Livepeer API.</p>
-<p>Being aware of these limitations, you can get started like that anyway. You will
-only need to create a CORS-enabled API key in the Livepeer Video Services
-dashboard. Check the documentation on <a href="https://livepeer.com/docs/guides/start-live-streaming/api-key">getting an API
+<p>You can do the entire minting flow from the browser. This is the quickest way to
+get started, but could have some security implications. Anyone with the proper
+knowledge will be able to snoop the API key from your code or network requests
+and impersonate you in the Livepeer API.</p>
+<p>So it is recommended that you use a CORS-enabled API key with restricted access
+to the API. Check the documentation on <a href="https://livepeer.com/docs/guides/start-live-streaming/api-key">getting an API
 key</a> for more
 information.</p>
-<p>The code below shows a simple example how the whole flow would look like from
+<p>The code below shows a simple example of how the whole flow would look like from
 the browser:</p>
 <pre><code class="language-js"><span class="hl-1">import</span><span class="hl-0"> </span><span class="hl-2">videonft</span><span class="hl-0"> </span><span class="hl-1">from</span><span class="hl-0"> </span><span class="hl-3">&#39;@livepeer/video-nft&#39;</span><br/><br/><span class="hl-5">const</span><span class="hl-0"> </span><span class="hl-6">apiOpts</span><span class="hl-0"> = {</span><br/><span class="hl-0">  </span><span class="hl-2">auth:</span><span class="hl-0"> { </span><span class="hl-2">apiKey:</span><span class="hl-0"> </span><span class="hl-3">&#39;your-api-key-here&#39;</span><span class="hl-0"> },</span><br/><span class="hl-0">  </span><span class="hl-4">// defaults to current origin if not specified</span><br/><span class="hl-0">  </span><span class="hl-2">endpoint:</span><span class="hl-0"> </span><span class="hl-2">prodApiEndpoint</span><br/><span class="hl-0">};</span><br/><span class="hl-5">const</span><span class="hl-0"> </span><span class="hl-6">chainId</span><span class="hl-0"> = </span><span class="hl-2">ethereum</span><span class="hl-0">.</span><span class="hl-2">chainId</span><span class="hl-0">; </span><span class="hl-4">// or await ethereum.request({ method: &#39;eth_chainId&#39; });</span><br/><span class="hl-5">const</span><span class="hl-0"> </span><span class="hl-6">minter</span><span class="hl-0"> = </span><span class="hl-5">new</span><span class="hl-0"> </span><span class="hl-2">videonft</span><span class="hl-0">.</span><span class="hl-2">minter</span><span class="hl-0">.</span><span class="hl-7">FullMinter</span><span class="hl-0">(</span><span class="hl-2">apiOpts</span><span class="hl-0">, { </span><span class="hl-2">ethereum</span><span class="hl-0">, </span><span class="hl-2">chainId</span><span class="hl-0"> });</span><br/><br/><span class="hl-4">// file is optional, will open a file picker if not provided.</span><br/><span class="hl-5">async</span><span class="hl-0"> </span><span class="hl-5">function</span><span class="hl-0"> </span><span class="hl-7">mintNft</span><span class="hl-0">(</span><span class="hl-2">file</span><span class="hl-0">) {</span><br/><span class="hl-0">  </span><span class="hl-5">const</span><span class="hl-0"> </span><span class="hl-6">nftInfo</span><span class="hl-0"> = </span><span class="hl-1">await</span><span class="hl-0"> </span><span class="hl-2">minter</span><span class="hl-0">.</span><span class="hl-7">createNft</span><span class="hl-0">({</span><br/><span class="hl-0">    </span><span class="hl-2">name:</span><span class="hl-0"> </span><span class="hl-3">&#39;My NFT&#39;</span><span class="hl-0">,</span><br/><span class="hl-0">    </span><span class="hl-2">file</span><span class="hl-0">,</span><br/><span class="hl-0">    </span><span class="hl-2">nftMetadata:</span><span class="hl-0"> {</span><br/><span class="hl-0">      </span><span class="hl-2">description:</span><span class="hl-0"> </span><span class="hl-3">&#39;My NFT description&#39;</span><span class="hl-0">,</span><br/><span class="hl-0">      </span><span class="hl-2">traits:</span><span class="hl-0"> { </span><span class="hl-3">&#39;my-custom-trait&#39;</span><span class="hl-2">:</span><span class="hl-0"> </span><span class="hl-3">&#39;my-custom-value&#39;</span><span class="hl-0"> }</span><br/><span class="hl-0">    }</span><br/><span class="hl-0">  });</span><br/><span class="hl-0">  </span><span class="hl-2">console</span><span class="hl-0">.</span><span class="hl-7">log</span><span class="hl-0">(</span><span class="hl-3">`minted NFT on contract </span><span class="hl-5">${</span><span class="hl-2">nftInfo</span><span class="hl-8">.</span><span class="hl-2">contractAddress</span><span class="hl-5">}</span><span class="hl-3"> with ID </span><span class="hl-5">${</span><span class="hl-2">nftInfo</span><span class="hl-8">.</span><span class="hl-2">tokenId</span><span class="hl-5">}</span><span class="hl-3">`</span><span class="hl-0">);</span><br/><span class="hl-0">  </span><span class="hl-1">return</span><span class="hl-0"> </span><span class="hl-2">nftInfo</span><span class="hl-0">;</span><br/><span class="hl-0">}</span>
 </code></pre>
 <p>It is common to prefer more control over the individual steps of the minting
-process though. You can use it to show some feedback to your user, ask for
+process. You can use it to show some feedback to your user and ask for
 additional information or confirmation. That same example would look like this:</p>
 <pre><code class="language-ts"><span class="hl-5">async</span><span class="hl-0"> </span><span class="hl-5">function</span><span class="hl-0"> </span><span class="hl-7">mintNft</span><span class="hl-0">() {</span><br/><span class="hl-0">  </span><span class="hl-5">const</span><span class="hl-0"> </span><span class="hl-6">file</span><span class="hl-0"> = </span><span class="hl-1">await</span><span class="hl-0"> </span><span class="hl-2">minter</span><span class="hl-0">.</span><span class="hl-2">uploader</span><span class="hl-0">.</span><span class="hl-7">pickFile</span><span class="hl-0">();</span><br/><span class="hl-0">  </span><span class="hl-5">let</span><span class="hl-0"> </span><span class="hl-2">asset</span><span class="hl-0"> = </span><span class="hl-1">await</span><span class="hl-0"> </span><span class="hl-2">minter</span><span class="hl-0">.</span><span class="hl-2">api</span><span class="hl-0">.</span><span class="hl-7">createAsset</span><span class="hl-0">(</span><span class="hl-3">&#39;My NFT&#39;</span><span class="hl-0">, </span><span class="hl-2">file</span><span class="hl-0">);</span><br/><span class="hl-0">  </span><span class="hl-4">// optional, optimizes the video for the NFT</span><br/><span class="hl-0">  </span><span class="hl-2">asset</span><span class="hl-0"> = </span><span class="hl-1">await</span><span class="hl-0"> </span><span class="hl-2">minter</span><span class="hl-0">.</span><span class="hl-2">api</span><span class="hl-0">.</span><span class="hl-7">nftNormalize</span><span class="hl-0">(</span><span class="hl-2">asset</span><span class="hl-0">);</span><br/><br/><span class="hl-0">  </span><span class="hl-5">const</span><span class="hl-0"> </span><span class="hl-6">nftMetadata</span><span class="hl-0"> = {</span><br/><span class="hl-0">    </span><span class="hl-2">description:</span><span class="hl-0"> </span><span class="hl-3">&#39;My NFT description&#39;</span><span class="hl-0">,</span><br/><span class="hl-0">    </span><span class="hl-2">traits:</span><span class="hl-0"> { </span><span class="hl-3">&#39;my-custom-trait&#39;</span><span class="hl-2">:</span><span class="hl-0"> </span><span class="hl-3">&#39;my-custom-value&#39;</span><span class="hl-0"> }</span><br/><span class="hl-0">  };</span><br/><span class="hl-0">  </span><span class="hl-5">const</span><span class="hl-0"> </span><span class="hl-6">ipfs</span><span class="hl-0"> = </span><span class="hl-1">await</span><span class="hl-0"> </span><span class="hl-2">minter</span><span class="hl-0">.</span><span class="hl-2">api</span><span class="hl-0">.</span><span class="hl-7">exportToIPFS</span><span class="hl-0">(</span><span class="hl-2">asset</span><span class="hl-0">.</span><span class="hl-2">id</span><span class="hl-0">, </span><span class="hl-2">nftMetadata</span><span class="hl-0">);</span><br/><span class="hl-0">  </span><span class="hl-5">const</span><span class="hl-0"> </span><span class="hl-6">tx</span><span class="hl-0"> = </span><span class="hl-1">await</span><span class="hl-0"> </span><span class="hl-2">minter</span><span class="hl-0">.</span><span class="hl-2">web3</span><span class="hl-0">.</span><span class="hl-7">mintNft</span><span class="hl-0">(</span><span class="hl-2">ipfs</span><span class="hl-0">.</span><span class="hl-2">nftMetadataUrl</span><span class="hl-0">);</span><br/><span class="hl-0">  </span><span class="hl-5">const</span><span class="hl-0"> </span><span class="hl-6">nftInfo</span><span class="hl-0"> = </span><span class="hl-1">await</span><span class="hl-0"> </span><span class="hl-2">minter</span><span class="hl-0">.</span><span class="hl-2">web3</span><span class="hl-0">.</span><span class="hl-7">getMintedNftInfo</span><span class="hl-0">(</span><span class="hl-2">tx</span><span class="hl-0">);</span><br/><span class="hl-0">  </span><span class="hl-2">console</span><span class="hl-0">.</span><span class="hl-7">log</span><span class="hl-0">(</span><span class="hl-3">`minted NFT on contract </span><span class="hl-5">${</span><span class="hl-2">nftInfo</span><span class="hl-8">.</span><span class="hl-2">contractAddress</span><span class="hl-5">}</span><span class="hl-3"> with ID </span><span class="hl-5">${</span><span class="hl-2">nftInfo</span><span class="hl-8">.</span><span class="hl-2">tokenId</span><span class="hl-5">}</span><span class="hl-3">`</span><span class="hl-0">);</span><br/><span class="hl-0">  </span><span class="hl-1">return</span><span class="hl-0"> </span><span class="hl-2">nftInfo</span><span class="hl-0">;</span><br/><span class="hl-0">}</span>
 </code></pre>
 
-<a href="#split-backend-and-browser-setups" id="split-backend-and-browser-setups" style="color: inherit; text-decoration: none;">
-  <h3>Split backend and browser setups</h3>
+<a href="#split-backend-and-browser" id="split-backend-and-browser" style="color: inherit; text-decoration: none;">
+  <h3>Split backend and browser</h3>
 </a>
-<p>// TO-DO...</p>
+<p>If you&#39;d rather have the maximum security for your API key, you can create a
+backend to serve as a proxy to the Livepeer API and optionally provide
+higher-level abstractions for all the minting operations.</p>
+<p>You can even do the entire flow from the backend as well, including the
+blockchain transaction via the <code>Web3</code> helper. On that case, it would not be your
+users doing the minting but you. That means not only you would need to pay for
+the gas costs yourself, but your users would also not own the NFTs they mint.
+You can circumvent that by immediately transferring the minted NFT to the user
+(more gas) or creating a custom contract that allows minting to another address
+in the <code>mint()</code> call, but the recommended approach here is to just let your
+users do the minting themselves.</p>
+<p>So we suggest you to keep the <code>Web3</code> minting part in the browser, close to your
+users.</p>
+<p>// WIP...</p>
 
 <a href="#cli" id="cli" style="color: inherit; text-decoration: none;">
   <h2>CLI</h2>
