@@ -1,27 +1,22 @@
 import fs from 'fs';
 import inquirer from 'inquirer';
 
-import parseCli from './cli-args';
-import { Asset } from './types/schema';
-import { VideoNFT } from './video-nft';
+import parseCli from './args';
+import videonft, { Asset } from '..';
 
 async function videoNft() {
 	const args = await parseCli();
 	const { apiKey, apiEndpoint: endpoint } = args;
-	const sdk = new VideoNFT({
+	const uploader = new videonft.minter.Uploader();
+	const sdk = new videonft.minter.Api({
 		auth: { apiKey },
 		endpoint
 	});
 
-	let file: fs.ReadStream | null = null;
-	let asset: Asset;
-	try {
-		file = fs.createReadStream(args.filename);
+	let asset = await uploader.useFile(args.filename, file => {
 		printStep('Uploading file...');
-		asset = await sdk.createAsset(args.assetName, file, printProgress);
-	} finally {
-		file?.close();
-	}
+		return sdk.createAsset(args.assetName, file, printProgress);
+	});
 	asset = await maybeTranscode(sdk, asset);
 
 	printStep('Starting export...');
@@ -44,7 +39,7 @@ function printProgress(progress: number) {
 	console.log(` - progress: ${100 * progress}%`);
 }
 
-async function maybeTranscode(sdk: VideoNFT, asset: Asset) {
+async function maybeTranscode(sdk: videonft.minter.Api, asset: Asset) {
 	const { possible, desiredProfile } = sdk.checkNftNormalize(asset);
 	if (!possible || !desiredProfile) {
 		if (!possible) {

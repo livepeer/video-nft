@@ -1,5 +1,6 @@
 import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
+import minify from 'rollup-plugin-babel-minify';
 import baseTypescript from 'rollup-plugin-typescript2';
 import dts from 'rollup-plugin-dts';
 import pkg from './package.json';
@@ -9,7 +10,7 @@ const typescript = () => baseTypescript({ useTsconfigDeclarationDir: true });
 export default [
 	// browser-friendly UMD build
 	{
-		input: 'src/index.ts',
+		input: 'src/web.ts',
 		output: {
 			name: 'video-nft',
 			file: pkg.browser,
@@ -17,7 +18,15 @@ export default [
 			sourcemap: true
 			// inlineDynamicImports: true
 		},
-		plugins: [resolve(), commonjs(), typescript()]
+		plugins: [
+			resolve(),
+			commonjs(),
+			typescript(),
+			minify({
+				mangle: false,
+				comments: false
+			})
+		]
 	},
 	// CommonJS (for Node) and ES module (for bundlers) build.
 	{
@@ -40,7 +49,7 @@ export default [
 	},
 	// cli
 	{
-		input: 'src/cli.ts',
+		input: 'src/cli/index.ts',
 		external: [
 			'axios',
 			'ethers',

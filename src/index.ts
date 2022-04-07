@@ -1,2 +1,3 @@
-export * from './chains';
-export * from './video-nft';
+import * as videonft from './videonft';
+export * from './types/schema';
+export default videonft;

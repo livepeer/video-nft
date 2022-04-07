@@ -1,6 +1,6 @@
 {
 	"name": "@livepeer/video-nft",
-	"version": "0.2.0",
+	"version": "0.3.0-beta",
 	"description": "1-command minting of video NFTs",
 	"keywords": [
 		"video",
@@ -38,14 +38,17 @@
 	},
 	"scripts": {
 		"prepare": "yarn clean && yarn format && yarn build",
-		"build": "rollup -c",
+		"build": "yarn build:rollup && yarn build:docs",
+		"build:rollup": "rollup -c",
+		"build:docs": "typedoc",
 		"dev": "rollup -c -w",
+		"dev:docs": "watch-http-server ./dist/docs & typedoc --watch --preserveWatchOutput",
 		"start": "yarn build && ./bin/video-nft",
 		"format": "prettier --write \"./**/*.{ts,js,json}\"",
 		"clean": "rm -rf ./dist"
 	},
 	"bugs": {
-		"url": "https://github.com/livepeer/livepeer-com/issues"
+		"url": "https://github.com/livepeer/video-nft/issues"
 	},
 	"dependencies": {
 		"axios": "^0.26.0",
@@ -68,10 +71,16 @@
 		"eslint": "^8.9.0",
 		"prettier": "^2.5.1",
 		"rollup": "^2.70.1",
+		"rollup-plugin-babel-minify": "^10.0.0",
 		"rollup-plugin-dts": "^4.2.0",
 		"rollup-plugin-typescript2": "^0.31.2",
 		"ts-node": "^7.0.1",
 		"tslib": "^1.9.3",
-		"typescript": "^4.6.3"
+		"typedoc": "^0.22.13",
+		"typescript": "^4.6.3",
+		"watch-http-server": "^0.7.6"
+	},
+	"optionalDependencies": {
+		"fsevents": "^1.2.13"
 	}
 }

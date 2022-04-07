@@ -1,12 +1,29 @@
-// contracts/4_ERC721.sol
 // SPDX-License-Identifier: MIT
+
+// This file is here only for source code reference of the default ERC721
+// contract deployed by Livepeer. It is not currently used by this repository
+// in any way.
+
 pragma solidity ^0.8.0;
 
 import '@openzeppelin/contracts/token/ERC721/ERC721.sol';
 import '@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol';
 import '@openzeppelin/contracts/utils/Counters.sol';
 
-contract VideoNFT is ERC721URIStorage {
+interface IVideoNFT {
+	function mint(address owner, string memory tokenURI)
+		public
+		returns (uint256);
+
+	event Mint(
+		address indexed sender,
+		address indexed owner,
+		string tokenURI,
+		uint256 tokenId
+	);
+}
+
+contract VideoNFT is ERC721URIStorage, IVideoNFT {
 	using Counters for Counters.Counter;
 	Counters.Counter private _tokenIds;
 
