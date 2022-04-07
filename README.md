@@ -49,8 +49,19 @@ const web3 = new videonft.minter.Web3({ ethereum, chainId });
 
 ### CDN
 
-We are still working on support for injecting this SDK as a static script from a
-CDN. For now we recommend using it as an ES Module as suggested above.
+Add the following script tag to the header of your HTML file:
+
+```html
+<script src="https://unpkg.com/@livepeer/video-nft@0.3.2/dist/index.umd.js"></script>
+```
+
+The SDK will be available as a global named `videonft`:
+
+```js
+const web3 = new videonft.minter.FullMinter({}, { ethereum, chainId });
+```
+
+For more information about using the SDK check the [Usage](#usage) section.
 
 ## Documentation
 
