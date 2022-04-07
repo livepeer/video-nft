@@ -2,7 +2,7 @@ name: Docs
 
 on:
   push:
-    branches: [main, vg/feat/docs] # TODO: Make this only 'main'
+    branches: [main]
 
 jobs:
   build_and_lint:
