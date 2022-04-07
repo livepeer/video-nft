@@ -54,7 +54,8 @@ CDN. For now we recommend using it as an ES Module as suggested above.
 
 ## Documentation
 
-Browse the [code documentation](https://livepeer.github.io/video-nft/) online.
+Browse the [code
+documentation](https://livepeer.github.io/video-nft/modules.html) online.
 
  - Continue reading this for [Usage](#usage) and [Examples](#examples)
  - [Use the NFT minting CLI](https://livepeer.com/docs/guides/video-nft)
