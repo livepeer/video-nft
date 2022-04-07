@@ -40,7 +40,7 @@
 <pre><code class="language-bash"><span class="hl-0">npm install @livepeer/video-nft</span>
 </code></pre>
 <p>Then the API can then be imported as a regular module:</p>
-<pre><code class="language-js"><span class="hl-1">import</span><span class="hl-0"> </span><span class="hl-2">videonft</span><span class="hl-0"> </span><span class="hl-1">from</span><span class="hl-0"> </span><span class="hl-3">&#39;@livepeer/video-nft&#39;</span><br/><br/><span class="hl-4">// To upload files from the filesystem</span><br/><span class="hl-5">const</span><span class="hl-0"> </span><span class="hl-6">uploader</span><span class="hl-0"> = </span><span class="hl-5">new</span><span class="hl-0"> </span><span class="hl-2">videonft</span><span class="hl-0">.</span><span class="hl-2">minter</span><span class="hl-0">.</span><span class="hl-7">Uploader</span><span class="hl-0">();</span><br/><span class="hl-4">// To process videos and export to IPFS</span><br/><span class="hl-5">const</span><span class="hl-0"> </span><span class="hl-6">vodApi</span><span class="hl-0"> = </span><span class="hl-5">new</span><span class="hl-0"> </span><span class="hl-2">videonft</span><span class="hl-0">.</span><span class="hl-2">minter</span><span class="hl-0">.</span><span class="hl-7">Api</span><span class="hl-0">({ </span><span class="hl-2">auth:</span><span class="hl-0"> { </span><span class="hl-2">apiKey</span><span class="hl-0"> } });</span><br/><span class="hl-4">// To mint the NFT from the IPFS files</span><br/><span class="hl-5">const</span><span class="hl-0"> { </span><span class="hl-6">chainId</span><span class="hl-0"> } = </span><span class="hl-2">ethereum</span><br/><span class="hl-5">const</span><span class="hl-0"> </span><span class="hl-6">web3</span><span class="hl-0"> = </span><span class="hl-5">new</span><span class="hl-0"> </span><span class="hl-2">videonft</span><span class="hl-0">.</span><span class="hl-2">minter</span><span class="hl-0">.</span><span class="hl-7">Web3</span><span class="hl-0">({ </span><span class="hl-2">ethereum</span><span class="hl-0">, </span><span class="hl-2">chainId</span><span class="hl-0"> });</span>
+<pre><code class="language-js"><span class="hl-1">import</span><span class="hl-0"> </span><span class="hl-2">videonft</span><span class="hl-0"> </span><span class="hl-1">from</span><span class="hl-0"> </span><span class="hl-3">&#39;@livepeer/video-nft&#39;</span><br/><br/><span class="hl-4">// To upload videos from the filesystem</span><br/><span class="hl-5">const</span><span class="hl-0"> </span><span class="hl-6">uploader</span><span class="hl-0"> = </span><span class="hl-5">new</span><span class="hl-0"> </span><span class="hl-2">videonft</span><span class="hl-0">.</span><span class="hl-2">minter</span><span class="hl-0">.</span><span class="hl-7">Uploader</span><span class="hl-0">();</span><br/><span class="hl-4">// To process videos and export to IPFS</span><br/><span class="hl-5">const</span><span class="hl-0"> </span><span class="hl-6">vodApi</span><span class="hl-0"> = </span><span class="hl-5">new</span><span class="hl-0"> </span><span class="hl-2">videonft</span><span class="hl-0">.</span><span class="hl-2">minter</span><span class="hl-0">.</span><span class="hl-7">Api</span><span class="hl-0">({ </span><span class="hl-2">auth:</span><span class="hl-0"> { </span><span class="hl-2">apiKey</span><span class="hl-0"> } });</span><br/><span class="hl-4">// To mint the NFT from the IPFS files</span><br/><span class="hl-5">const</span><span class="hl-0"> { </span><span class="hl-6">chainId</span><span class="hl-0"> } = </span><span class="hl-2">ethereum</span><br/><span class="hl-5">const</span><span class="hl-0"> </span><span class="hl-6">web3</span><span class="hl-0"> = </span><span class="hl-5">new</span><span class="hl-0"> </span><span class="hl-2">videonft</span><span class="hl-0">.</span><span class="hl-2">minter</span><span class="hl-0">.</span><span class="hl-7">Web3</span><span class="hl-0">({ </span><span class="hl-2">ethereum</span><span class="hl-0">, </span><span class="hl-2">chainId</span><span class="hl-0"> });</span>
 </code></pre>
 
 <a href="#cdn" id="cdn" style="color: inherit; text-decoration: none;">
@@ -143,14 +143,35 @@ higher-level abstractions for all the minting operations.</p>
 <p>You can even do the entire flow from the backend as well, including the
 blockchain transaction via the <code>Web3</code> helper. On that case, it would not be your
 users doing the minting but you. That means not only you would need to pay for
-the gas costs yourself, but your users would also not own the NFTs they mint.
-You can circumvent that by immediately transferring the minted NFT to the user
+the gas costs yourself, but your users would also not own the NFTs they mint.</p>
+<p>You could circumvent that by immediately transferring the minted NFT to the user
 (more gas) or creating a custom contract that allows minting to another address
 in the <code>mint()</code> call, but the recommended approach here is to just let your
-users do the minting themselves.</p>
-<p>So we suggest you to keep the <code>Web3</code> minting part in the browser, close to your
-users.</p>
-<p>// WIP...</p>
+users do the minting themselves. So we suggest you to keep the <code>Web3</code> minting
+part in the browser, close to your users.</p>
+<p>The simplest backend you could make is one that just forwards the calls to the
+Livepeer API whilst injecting an API key:</p>
+<pre><code class="language-js"><span class="hl-1">import</span><span class="hl-0"> </span><span class="hl-2">express</span><span class="hl-0"> </span><span class="hl-1">from</span><span class="hl-0"> </span><span class="hl-3">&#39;express&#39;</span><span class="hl-0">;</span><br/><span class="hl-1">import</span><span class="hl-0"> { </span><span class="hl-2">createProxyMiddleware</span><span class="hl-0"> } </span><span class="hl-1">from</span><span class="hl-0"> </span><span class="hl-3">&#39;http-proxy-middleware&#39;</span><span class="hl-0">;</span><br/><br/><span class="hl-5">const</span><span class="hl-0"> </span><span class="hl-6">app</span><span class="hl-0"> = </span><span class="hl-7">express</span><span class="hl-0">();</span><br/><span class="hl-5">const</span><span class="hl-0"> </span><span class="hl-6">proxy</span><span class="hl-0"> = </span><span class="hl-7">createProxyMiddleware</span><span class="hl-0">({</span><br/><span class="hl-0">    </span><span class="hl-2">target:</span><span class="hl-0"> </span><span class="hl-3">&#39;https://livepeer.com&#39;</span><span class="hl-0">,</span><br/><span class="hl-0">    </span><span class="hl-2">changeOrigin:</span><span class="hl-0"> </span><span class="hl-5">true</span><span class="hl-0">,</span><br/><span class="hl-0">    </span><span class="hl-2">headers:</span><span class="hl-0"> {</span><br/><span class="hl-0">        </span><span class="hl-2">authorization:</span><span class="hl-0"> </span><span class="hl-2">process</span><span class="hl-0">.</span><span class="hl-2">env</span><span class="hl-0">.</span><span class="hl-6">LP_API_KEY</span><span class="hl-0"> ?? </span><span class="hl-3">&#39;&#39;</span><br/><span class="hl-0">    }</span><br/><span class="hl-0">});</span><br/><br/><span class="hl-2">app</span><span class="hl-0">.</span><span class="hl-7">get</span><span class="hl-0">(</span><span class="hl-3">&#39;/api/asset/:id&#39;</span><span class="hl-0">, </span><span class="hl-2">proxy</span><span class="hl-0">);</span><br/><span class="hl-2">app</span><span class="hl-0">.</span><span class="hl-7">get</span><span class="hl-0">(</span><span class="hl-3">&#39;/api/task/:id&#39;</span><span class="hl-0">, </span><span class="hl-2">proxy</span><span class="hl-0">);</span><br/><span class="hl-2">app</span><span class="hl-0">.</span><span class="hl-7">post</span><span class="hl-0">(</span><span class="hl-3">&#39;/api/asset/request-upload&#39;</span><span class="hl-0">, </span><span class="hl-2">proxy</span><span class="hl-0">);</span><br/><span class="hl-2">app</span><span class="hl-0">.</span><span class="hl-7">post</span><span class="hl-0">(</span><span class="hl-3">&#39;/api/asset/transcode&#39;</span><span class="hl-0">, </span><span class="hl-2">proxy</span><span class="hl-0">);</span><br/><span class="hl-2">app</span><span class="hl-0">.</span><span class="hl-7">post</span><span class="hl-0">(</span><span class="hl-3">&#39;/api/asset/:id/export&#39;</span><span class="hl-0">, </span><span class="hl-2">proxy</span><span class="hl-0">);</span><br/><br/><span class="hl-2">app</span><span class="hl-0">.</span><span class="hl-7">listen</span><span class="hl-0">(</span><span class="hl-9">3000</span><span class="hl-0">);</span>
+</code></pre>
+<p>By running that backend you can use the same code examples from the browser-only
+section above. All you need to change is the <code>apiOpts</code> object to remove the
+<code>auth</code> option (since your proxy will be adding that) and changing the <code>endpoint</code>
+to where your backend is:</p>
+<ul>
+<li>If your backend is running on the same domain as your frontend, you can
+actually omit the <code>endpoint</code> field as well and the client will default to the
+current origin:<pre><code class="language-js"><span class="hl-5">const</span><span class="hl-0"> </span><span class="hl-6">apiOpts</span><span class="hl-0"> = {};</span><br/><span class="hl-5">const</span><span class="hl-0"> </span><span class="hl-6">minter</span><span class="hl-0"> = </span><span class="hl-5">new</span><span class="hl-0"> </span><span class="hl-2">videonft</span><span class="hl-0">.</span><span class="hl-2">minter</span><span class="hl-0">.</span><span class="hl-7">FullMinter</span><span class="hl-0">(</span><span class="hl-2">apiOpts</span><span class="hl-0">, { </span><span class="hl-2">ethereum</span><span class="hl-0">, </span><span class="hl-2">chainId</span><span class="hl-0"> });</span>
+</code></pre>
+</li>
+<li>You can also run your backend on a different domain than your frontend.
+You&#39;ll likely need some CORS logic or middleware in your backend to support
+the cross-origin request. You can use a package like
+<a href="https://www.npmjs.com/package/cors">cors</a> for that. On the frontend, you
+only need to add the domain (with the scheme) to the <code>endpoint</code> field:<pre><code class="language-js"><span class="hl-5">const</span><span class="hl-0"> </span><span class="hl-6">apiOpts</span><span class="hl-0"> = { </span><span class="hl-2">endpoint:</span><span class="hl-0"> </span><span class="hl-3">&#39;https://backend.example.com&#39;</span><span class="hl-0"> };</span><br/><span class="hl-5">const</span><span class="hl-0"> </span><span class="hl-6">minter</span><span class="hl-0"> = </span><span class="hl-5">new</span><span class="hl-0"> </span><span class="hl-2">videonft</span><span class="hl-0">.</span><span class="hl-2">minter</span><span class="hl-0">.</span><span class="hl-7">FullMinter</span><span class="hl-0">(</span><span class="hl-2">apiOpts</span><span class="hl-0">, { </span><span class="hl-2">ethereum</span><span class="hl-0">, </span><span class="hl-2">chainId</span><span class="hl-0"> });</span>
+</code></pre>
+</li>
+</ul>
+<p>Everything else can be kept the same!</p>
 
 <a href="#cli" id="cli" style="color: inherit; text-decoration: none;">
   <h2>CLI</h2>
@@ -160,7 +181,15 @@ from the terminal. All you need is an API key and a file to mint. To run it
 directly with <code>npx</code>:</p>
 <pre><code class="language-bash"><span class="hl-0">npx @livepeer/video-nft</span>
 </code></pre>
-<p>For more information check <a href="https://livepeer.com/docs/guides/video-nft">this guide</a>.</p>
+<p>You can also check the source code of the CLI or the
+<a href="https://livepeer.com/mint-nft">livepeer.com/mint-nft</a> page for further examples
+on how to use the SDK:</p>
+<ul>
+<li><a href="https://github.com/livepeer/video-nft/blob/vg/feat/docs/src/cli/index.ts">CLI source</a></li>
+<li><a href="https://github.com/livepeer/livepeer-com/blob/master/packages/www/pages/mint-nft/index.tsx">Mint NFT page source</a></li>
+</ul>
+<p>For more information using the CLI check <a href="https://livepeer.com/docs/guides/video-nft">this
+guide</a>.</p>
 
 <a href="#contributing" id="contributing" style="color: inherit; text-decoration: none;">
   <h2>Contributing</h2>
