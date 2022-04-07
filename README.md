@@ -10,12 +10,16 @@ SDK for creating Video NFT minting applications.
 
 Also provides a CLI for minting an NFT in 1-command.
 
-## Table of Contents
+## Index
 
-- [Installation](#installation)
+- [Installing](#installing)
+- [Documentation](#documentation)
 - [Usage](#usage)
+- [Examples](#examples)
+- [CLI](#cli)
+- [Contributing](#contributing)
 
-## Installation
+## Installing
 
 ### Package Managers
 
@@ -48,12 +52,22 @@ const web3 = new videonft.minter.Web3({ ethereum, chainId });
 We are still working on support for injecting this SDK as a static script from a
 CDN. For now we recommend using it as an ES Module as suggested above.
 
+## Documentation
+
+Browse the code [documentation](https://livepeer.github.io/video-nft/) online
+
+ - Continue reading this for [Usage](#usage) and [Examples](#examples)
+ - For the NFT minting CLI check [this guide](https://livepeer.com/docs/guides/video-nft)
+
 ## Usage
 
 This SDK can be used both from Node.js (like in a backend) as well as the
 browser, and is currently best used with the
 [Polygon](https://polygon.technology) blockchain. It consists of a couple
 different modules which are all included in the `videonft` object.
+
+On the browser-side, it has been thoroughly tested with the MetaMask wallet. It
+should work with any other Web3 wallet compatible with MetaMask though.
 
 ### Modules
 
@@ -85,7 +99,7 @@ an NFT-minting application:
   be performed with the video asset. It is also abstracted by the `minter.Api`
   component through the `nftNormalize` and `checkNftNormalize` functions.
 
-### Examples
+## Examples
 
 We will focus on the main `minter` module here which provides the higher-level
 abstractions for minting an NFT. The module has 3 main parts as shown
@@ -95,7 +109,7 @@ You would normally split parts of the logic between your frontend and your
 backend for different reasons like security or performance. Let's explore some
 of the alternatives here.
 
-#### Browser-only
+### Browser-only
 
 You can use the entire SDK only from the browser. This is useful for hacking
 and/or demonstrating an idea, but has some security implications. Anyone with
@@ -161,3 +175,29 @@ async function mintNft() {
 }
 ```
 
+### Split backend and browser setups
+
+// TO-DO...
+
+## CLI
+
+This project also contains a CLI that uses the SDK and can be used to mint NFTs
+from the terminal. All you need is an API key and a file to mint. To run it
+directly with `npx`:
+
+```bash
+npx @livepeer/video-nft
+```
+
+For more information check [this guide](https://livepeer.com/docs/guides/video-nft).
+
+## Contributing
+
+[Pull Requests](https://github.com/livepeer/video-nft/pulls) are always welcome!
+
+Also feel free to open [Issues](https://github.com/livepeer/video-nft/issues)
+with bug reports or feature requests. We're glad for any feedback!
+
+## License
+
+MIT
