@@ -1,5 +1,6 @@
 import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
+import json from '@rollup/plugin-json';
 import minify from 'rollup-plugin-babel-minify';
 import baseTypescript from 'rollup-plugin-typescript2';
 import dts from 'rollup-plugin-dts';
@@ -19,7 +20,8 @@ export default [
 			// inlineDynamicImports: true
 		},
 		plugins: [
-			resolve(),
+			resolve({ jsnext: true, preferBuiltins: true, browser: true }),
+			json(),
 			commonjs(),
 			typescript(),
 			minify({
