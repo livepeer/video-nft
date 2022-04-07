@@ -216,10 +216,10 @@ app.post('/api/asset/:id/export', proxy);
 app.listen(3000);
 ```
 
-By running that backend you can use the same code examples from the browser-only
-section above. All you need to change is the `apiOpts` object to remove the
-`auth` option (since your proxy will be adding that) and changing the `endpoint`
-to where your backend is:
+By running that backend you can use the same code examples from the
+[browser-only](#browser-only) section above. All you need to change is the
+`apiOpts` object to remove the `auth` option (since your proxy will be adding
+that) and changing the `endpoint` to where your backend is:
  - If your backend is running on the same domain as your frontend, you can
    actually omit the `endpoint` field as well and the client will default to the
    current origin:
