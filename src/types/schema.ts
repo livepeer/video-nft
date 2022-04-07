@@ -154,23 +154,23 @@ export type ExportToIPFSOutput = {
 	/**
 	 * URL for the file with the IPFS protocol
 	 */
-	videoFileUrl?: string;
+	videoFileUrl: string;
 	/**
 	 * URL to access file via HTTP through an IPFS gateway
 	 */
-	videoFileGatewayUrl?: string;
+	videoFileGatewayUrl: string;
 	/**
 	 * IPFS CID of the default metadata exported for the video
 	 */
-	nftMetadataCid?: string;
+	nftMetadataCid: string;
 	/**
 	 * URL for the metadata file with the IPFS protocol
 	 */
-	nftMetadataUrl?: string;
+	nftMetadataUrl: string;
 	/**
 	 * URL to access metadata file via HTTP through an IPFS gateway
 	 */
-	nftMetadataGatewayUrl?: string;
+	nftMetadataGatewayUrl: string;
 };
 
 export interface Task {

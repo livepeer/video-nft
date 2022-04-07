@@ -48,7 +48,7 @@
 		"clean": "rm -rf ./dist"
 	},
 	"bugs": {
-		"url": "https://github.com/livepeer/livepeer-com/issues"
+		"url": "https://github.com/livepeer/video-nft/issues"
 	},
 	"dependencies": {
 		"axios": "^0.26.0",

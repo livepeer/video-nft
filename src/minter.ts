@@ -61,6 +61,10 @@ const asJsonRpcProvider = (ethOrPrv?: EthereumOrProvider) =>
  */
 export type MintedNftInfo = {
 	/**
+	 * The address of the smart contract on which the NFT was minted.
+	 */
+	contractAddress: string;
+	/**
 	 * The ID of the minted NFT which can be used to fetch information about it in
 	 * the ERC-721 contract. Will only be available if the NFT contract emits a
 	 * `Mint` event compatible with the {@link videoNftAbi}
@@ -629,25 +633,25 @@ export class Web3 {
 		tx: ethers.ContractTransaction
 	): Promise<MintedNftInfo> {
 		const receipt = await tx.wait();
+		const contractAddress = receipt.to;
 		const mintEv = receipt.events?.find(ev => ev?.event === 'Mint')?.args;
 		const tokenId =
 			mintEv && mintEv.length > 3
 				? (mintEv[3].toNumber() as number)
 				: undefined;
-		let info: MintedNftInfo = { tokenId };
+		let info: MintedNftInfo = { contractAddress, tokenId };
 		const chainInfo = getBuiltinChain(this.chainId);
 		if (chainInfo?.opensea) {
 			const {
 				opensea: { baseUrl, chainName }
 			} = chainInfo;
-			const { to: contractAddr } = receipt;
 			info = {
 				...info,
 				opensea: {
-					contractUrl: `${baseUrl}/assets?search%5Bquery%5D=${contractAddr}`,
+					contractUrl: `${baseUrl}/assets?search%5Bquery%5D=${contractAddress}`,
 					tokenUrl: !tokenId
 						? undefined
-						: `${baseUrl}/assets/${chainName}/${contractAddr}/${tokenId}`
+						: `${baseUrl}/assets/${chainName}/${contractAddress}/${tokenId}`
 				}
 			};
 		}
@@ -716,19 +720,20 @@ export class FullMinter {
 	 * @returns	Information about the minted NFT.
 	 */
 	async createNft(args: {
-		filepath?: string;
-		assetName: string;
-		skipNormalize: boolean;
-		nftMetadata: string;
-		mint: {
+		file?: File | NodeJS.ReadableStream | string;
+		name: string;
+		skipNormalize?: boolean;
+		nftMetadata?: string | Record<string, any>;
+		mint?: {
 			contractAddress?: string;
 			to?: string;
 		};
 	}) {
-		const file = args.filepath
-			? this.uploader.openFile(args.filepath)
-			: await this.uploader.pickFile();
-		let asset = await this.api.createAsset(args.assetName, file);
+		const file =
+			typeof args.file === 'string'
+				? this.uploader.openFile(args.file)
+				: args.file ?? (await this.uploader.pickFile());
+		let asset = await this.api.createAsset(args.name, file);
 		if (!args.skipNormalize) {
 			asset = await this.api.nftNormalize(asset);
 		}
@@ -736,9 +741,7 @@ export class FullMinter {
 			asset.id,
 			args.nftMetadata
 		);
-		const {
-			mint: { contractAddress, to }
-		} = args;
+		const { contractAddress, to } = args?.mint ?? {};
 		const tx = await this.web3.mintNft(
 			nftMetadataUrl ?? '',
 			contractAddress,
