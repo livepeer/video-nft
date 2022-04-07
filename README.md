@@ -36,7 +36,7 @@ npm install @livepeer/video-nft
 Then the API can then be imported as a regular module:
 
 ```js
-import videonft from '@livepeer/video-nft'
+import { videonft } from '@livepeer/video-nft'
 
 // To upload videos from the filesystem
 const uploader = new videonft.minter.Uploader();
@@ -126,7 +126,7 @@ The code below shows a simple example of how the whole flow would look like from
 the browser:
 
 ```js
-import videonft from '@livepeer/video-nft'
+import { videonft } from '@livepeer/video-nft'
 
 const apiOpts = {
   auth: { apiKey: 'your-api-key-here' },

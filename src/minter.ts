@@ -664,19 +664,17 @@ export class Web3 {
  * single environment.
  *
  * @remarks
- * This should be used only as an example of what it would look like if the full
- * minting flow was performed in a single part of the stack.
- *
- * @remarks
- * You will most likely not use this in a production application, unless:
+ * You might prefer **not** to use this in a production application, unless:
+ *  * You are running a proxy to the Livepeer API that simply injects an API key
+ *    to the requests from your frontend. See the `Split backend and browser`
+ *    example in the SDK readme for more information.
  *  * You are OK exposing an API key in the {@link Api} component in your
  *    frontend. Doing that means that anyone can grab the key from your web page
- *    and call any Livepeer API on your behalf (even the ones you're not using
- *    in your app).
- *  * You are doing the {@link Web3} minting part in your backend. This means
- *    that you will be calling the Ethereum-compatible blockchain and paying for
- *    the transactions yourself. The users will likely have less control of what
- *    is being done as well.
+ *    and call any Livepeer API on your behalf, so use with caution.
+ *  * You are doing the whole flow from your backend, including the {@link Web3}
+ *    minting part. This means that you will be calling the Ethereum-compatible
+ *    blockchain and paying for the transactions yourself. The users will likely
+ *    have less control of what is being done as well.
  *  * Something else that we haven't considered! Do not limit yourself by this
  *    documentation, but do consider the security and ownership implications of
  *    any such setup.

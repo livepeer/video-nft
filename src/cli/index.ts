@@ -1,14 +1,13 @@
-import fs from 'fs';
 import inquirer from 'inquirer';
 
 import parseCli from './args';
-import videonft, { Asset } from '..';
+import { minter, Asset } from '..';
 
 async function videoNft() {
 	const args = await parseCli();
 	const { apiKey, apiEndpoint: endpoint } = args;
-	const uploader = new videonft.minter.Uploader();
-	const sdk = new videonft.minter.Api({
+	const uploader = new minter.Uploader();
+	const sdk = new minter.Api({
 		auth: { apiKey },
 		endpoint
 	});
@@ -39,7 +38,7 @@ function printProgress(progress: number) {
 	console.log(` - progress: ${100 * progress}%`);
 }
 
-async function maybeTranscode(sdk: videonft.minter.Api, asset: Asset) {
+async function maybeTranscode(sdk: minter.Api, asset: Asset) {
 	const { possible, desiredProfile } = sdk.checkNftNormalize(asset);
 	if (!possible || !desiredProfile) {
 		if (!possible) {
