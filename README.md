@@ -38,7 +38,7 @@ Then the API can then be imported as a regular module:
 ```js
 import videonft from '@livepeer/video-nft'
 
-// To upload files from the filesystem
+// To upload videos from the filesystem
 const uploader = new videonft.minter.Uploader();
 // To process videos and export to IPFS
 const vodApi = new videonft.minter.Api({ auth: { apiKey } });
@@ -184,15 +184,60 @@ You can even do the entire flow from the backend as well, including the
 blockchain transaction via the `Web3` helper. On that case, it would not be your
 users doing the minting but you. That means not only you would need to pay for
 the gas costs yourself, but your users would also not own the NFTs they mint.
-You can circumvent that by immediately transferring the minted NFT to the user
+
+You could circumvent that by immediately transferring the minted NFT to the user
 (more gas) or creating a custom contract that allows minting to another address
 in the `mint()` call, but the recommended approach here is to just let your
-users do the minting themselves.
+users do the minting themselves. So we suggest you to keep the `Web3` minting
+part in the browser, close to your users.
 
-So we suggest you to keep the `Web3` minting part in the browser, close to your
-users.
+The simplest backend you could make is one that just forwards the calls to the
+Livepeer API whilst injecting an API key:
 
-// WIP...
+```js
+import express from 'express';
+import { createProxyMiddleware } from 'http-proxy-middleware';
+
+const app = express();
+const proxy = createProxyMiddleware({
+	target: 'https://livepeer.com',
+	changeOrigin: true,
+	headers: {
+		authorization: process.env.LP_API_KEY ?? ''
+	}
+});
+
+app.get('/api/asset/:id', proxy);
+app.get('/api/task/:id', proxy);
+app.post('/api/asset/request-upload', proxy);
+app.post('/api/asset/transcode', proxy);
+app.post('/api/asset/:id/export', proxy);
+
+app.listen(3000);
+```
+
+By running that backend you can use the same code examples from the browser-only
+section above. All you need to change is the `apiOpts` object to remove the
+`auth` option (since your proxy will be adding that) and changing the `endpoint`
+to where your backend is:
+ - If your backend is running on the same domain as your frontend, you can
+   actually omit the `endpoint` field as well and the client will default to the
+   current origin:
+```js
+const apiOpts = {};
+const minter = new videonft.minter.FullMinter(apiOpts, { ethereum, chainId });
+```
+ - You can also run your backend on a different domain than your frontend.
+   You'll likely need some CORS logic or middleware in your backend to support
+   the cross-origin request. You can use a package like
+   [cors](https://www.npmjs.com/package/cors) for that. On the frontend, you
+   only need to add the domain (with the scheme) to the `endpoint` field:
+```js
+const apiOpts = { endpoint: 'https://backend.example.com' };
+const minter = new videonft.minter.FullMinter(apiOpts, { ethereum, chainId });
+```
+
+Everything else can be kept the same!
 
 ## CLI
 
@@ -204,7 +249,14 @@ directly with `npx`:
 npx @livepeer/video-nft
 ```
 
-For more information check [this guide](https://livepeer.com/docs/guides/video-nft).
+You can also check the source code of the CLI or the
+[livepeer.com/mint-nft](https://livepeer.com/mint-nft) page for further examples
+on how to use the SDK:
+ - [CLI source](https://github.com/livepeer/video-nft/blob/vg/feat/docs/src/cli/index.ts)
+ - [Mint NFT page source](https://github.com/livepeer/livepeer-com/blob/master/packages/www/pages/mint-nft/index.tsx)
+
+For more information using the CLI check [this
+guide](https://livepeer.com/docs/guides/video-nft).
 
 ## Contributing
 
