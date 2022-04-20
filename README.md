@@ -13,6 +13,7 @@ Also provides a CLI for minting an NFT in 1-command.
 ## Index
 
 - [Installing](#installing)
+- [Getting Started](#getting-started)
 - [Documentation](#documentation)
 - [Usage](#usage)
 - [Examples](#examples)
@@ -63,13 +64,18 @@ const web3 = new videonft.minter.FullMinter({}, { ethereum, chainId });
 
 For more information about using the SDK check the [Usage](#usage) section.
 
+## Getting Started
+
+Check our entry-point guides for getting started with this project:
+- [How to Mint a Video NFT](https://livepeer.com/docs/guides/video-nfts/mint-a-video-nft)
+- [Build a Video NFT app](https://livepeer.com/docs/guides/video-nfts/build-a-video-nft-app)
+
 ## Documentation
 
 Browse the [code
 documentation](https://livepeer.github.io/video-nft/modules.html) online.
 
  - Continue reading this for [Usage](#usage) and [Examples](#examples)
- - [Use the NFT minting CLI](https://livepeer.com/docs/guides/video-nft)
  - [Deploy your own ERC-721 contract](https://github.com/camiinthisthang/livepeer-nft#deploy-your-own-erc721-contract)
 
 ## Usage
