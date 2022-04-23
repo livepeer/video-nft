@@ -149,7 +149,7 @@ import { videonft } from '@livepeer/video-nft'
 const apiOpts = {
   auth: { apiKey: 'your-api-key-here' },
   // defaults to current origin if not specified
-  endpoint: prodApiEndpoint
+  endpoint: videonft.api.prodApiEndpoint
 };
 const chainId = ethereum.chainId; // or await ethereum.request({ method: 'eth_chainId' });
 const minter = new videonft.minter.FullMinter(apiOpts, { ethereum, chainId });
