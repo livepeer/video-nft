@@ -4,6 +4,10 @@
  * Ethereum-compatible chains. It also describes the SDK built-in chains, in
  * which it already has a deployed smart contract.
  *
+ * @remarks The current built-in chains are [Polygon
+ * Mainnet](https://chainlist.org/chain/137) and [Polygon Testnet
+ * (Mumbai)](https://chainlist.org/chain/80001).
+ *
  * @remarks
  * A built-in chain is one that we have already deployed an ERC-721 contract
  * that implements the {@link minter.videoNftAbi | Video NFT ABI}. Those can be

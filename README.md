@@ -16,6 +16,7 @@ Also provides a CLI for minting an NFT in 1-command.
 - [Getting Started](#getting-started)
 - [Documentation](#documentation)
 - [Usage](#usage)
+  - [Smart Contracts](#smart-contracts)
 - [Examples](#examples)
 - [CLI](#cli)
 - [Contributing](#contributing)
@@ -76,7 +77,7 @@ Browse the [code
 documentation](https://livepeer.github.io/video-nft/modules.html) online.
 
  - Continue reading this for [Usage](#usage) and [Examples](#examples)
- - [Deploy your own ERC-721 contract](https://github.com/camiinthisthang/livepeer-nft#deploy-your-own-erc721-contract)
+ - [Deploy your own ERC-721 contract](https://lvpr.link/create-erc721)
 
 ## Usage
 
@@ -87,6 +88,30 @@ different modules which are all included in the `videonft` object.
 
 On the browser-side, it has been thoroughly tested with the MetaMask wallet. It
 should work with any other Web3 wallet compatible with MetaMask though.
+
+### Smart Contracts
+
+The SDK provides [built-in
+support](https://livepeer.github.io/video-nft/modules/chains.html) for a couple
+of chains, specifically [Polygon](https://polygon.io/) mainnet and testnet. This
+means that you can get started with the SDK immediately without deploying your
+own custom smart contract. That naturally means that we have a [simple smart
+contract](https://lvpr.link/video-nft-erc721-src) deployed in these chains which
+is used by default to mint the NFTs.
+
+You can override these default contracts by passing your own smart contract
+address to the
+[`mintNft`](https://livepeer.github.io/video-nft/classes/minter.Web3.html#mintNft)
+or
+[`createNft`](https://livepeer.github.io/video-nft/classes/minter.FullMinter.html#createNft)
+functions. The only requirement is that your smart contract implements the
+[required
+ABI](https://livepeer.github.io/video-nft/modules/minter.html#videoNftAbi). You
+can also use any other chain that we don't have built-in support,
+you will only need to provide a custom smart contract every time.
+
+For help creating your own smart contract, follow our [Deploy your own ERC-721
+contract](https://lvpr.link/create-erc721) guide.
 
 ### Modules
 
