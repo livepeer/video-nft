@@ -16,6 +16,10 @@ export interface Asset {
 	 */
 	playbackId?: string;
 	/**
+	 * URL for HLS playback
+	 */
+	playbackUrl?: string;
+	/**
 	 * URL to manually download the asset if desired
 	 */
 	downloadUrl?: string;
@@ -31,6 +35,77 @@ export interface Asset {
 	 * Object store ID where the asset is stored
 	 */
 	objectStoreId?: string;
+	storage?: {
+		ipfs?: {
+			/**
+			 * Additional data to add to the NFT metadata exported to IPFS. Will be deep merged with the default metadata exported.
+			 */
+			nftMetadata?: {
+				[k: string]: unknown;
+			};
+		};
+	};
+	/**
+	 * Status of the asset
+	 */
+	status?: {
+		/**
+		 * Phase of the asset
+		 */
+		phase: 'waiting' | 'ready' | 'failed';
+		/**
+		 * Timestamp (in milliseconds) at which the asset was last updated
+		 */
+		updatedAt: number;
+		/**
+		 * Error message if the asset creation failed.
+		 */
+		errorMessage?: string;
+		storage?: {
+			ipfs?: {
+				taskIds: {
+					/**
+					 * ID of any currently running task that is exporting this asset to IPFS.
+					 */
+					pending?: string;
+					/**
+					 * ID of the last task to run successfully, that created the currently saved data.
+					 */
+					last?: string;
+					/**
+					 * ID of the last task to fail execution.
+					 */
+					failed?: string;
+				};
+				data?: {
+					/**
+					 * IPFS CID of the exported video file
+					 */
+					videoFileCid: string;
+					/**
+					 * URL for the file with the IPFS protocol
+					 */
+					videoFileUrl?: string;
+					/**
+					 * URL to access file via HTTP through an IPFS gateway
+					 */
+					videoFileGatewayUrl?: string;
+					/**
+					 * IPFS CID of the default metadata exported for the video
+					 */
+					nftMetadataCid?: string;
+					/**
+					 * URL for the metadata file with the IPFS protocol
+					 */
+					nftMetadataUrl?: string;
+					/**
+					 * URL to access metadata file via HTTP through an IPFS gateway
+					 */
+					nftMetadataGatewayUrl?: string;
+				};
+			};
+		};
+	};
 	/**
 	 * Name of the asset. This is not necessarily the filename, can be a custom name or title
 	 */
@@ -41,10 +116,6 @@ export interface Asset {
 	meta?: {
 		[k: string]: string;
 	};
-	/**
-	 * Timestamp (in milliseconds) at which the asset was last updated
-	 */
-	updatedAt?: number;
 	/**
 	 * Timestamp (in milliseconds) at which asset was created
 	 */
@@ -136,10 +207,6 @@ export interface Asset {
 			bitDepth?: number;
 		}[];
 	};
-	/**
-	 * Status of the asset
-	 */
-	status?: 'waiting' | 'ready' | 'failed';
 	/**
 	 * ID of the source asset (root) - If missing, this is a root asset
 	 */
