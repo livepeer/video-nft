@@ -1,10 +1,10 @@
 [![LivepeerJS](https://user-images.githubusercontent.com/555740/117340053-78210e80-ae6e-11eb-892c-d98085fe6824.png)](https://livepeer.github.io/livepeerjs/)
 
 ---
+
 # Video NFT SDK
 
 [![npm](https://img.shields.io/npm/v/@livepeer/video-nft.svg?style=flat-square&color=green)](https://www.npmjs.com/package/@livepeer/video-nft)
-
 
 SDK for creating Video NFT minting applications.
 
@@ -26,11 +26,13 @@ Also provides a CLI for minting an NFT in 1-command.
 ### Package Managers
 
 #### yarn
+
 ```bash
 yarn add @livepeer/video-nft
 ```
 
 #### npm
+
 ```bash
 npm install @livepeer/video-nft
 ```
@@ -38,14 +40,14 @@ npm install @livepeer/video-nft
 Then the API can then be imported as a regular module:
 
 ```js
-import { videonft } from '@livepeer/video-nft'
+import { videonft } from '@livepeer/video-nft';
 
 // To upload videos from the filesystem
 const uploader = new videonft.minter.Uploader();
-// To process videos and export to IPFS
+// To manage videos in the API and store them in IPFS
 const vodApi = new videonft.minter.Api({ auth: { apiKey } });
 // To mint the NFT from the IPFS files
-const { chainId } = ethereum
+const { chainId } = ethereum;
 const web3 = new videonft.minter.Web3({ ethereum, chainId });
 ```
 
@@ -68,8 +70,9 @@ For more information about using the SDK check the [Usage](#usage) section.
 ## Getting Started
 
 Check our entry-point guides for getting started with this project:
-- [How to Mint a Video NFT](https://livepeer.com/docs/guides/video-nfts/mint-a-video-nft)
-- [Build a Video NFT app](https://livepeer.com/docs/guides/video-nfts/build-a-video-nft-app)
+
+ - [How to Mint a Video NFT](https://livepeer.com/docs/guides/video-nfts/mint-a-video-nft)
+ - [Build a Video NFT app](https://livepeer.com/docs/guides/video-nfts/build-a-video-nft-app)
 
 ## Documentation
 
@@ -118,11 +121,12 @@ contract](https://lvpr.link/create-erc721) guide.
 The main module is the
 [`videonft.minter`](https://livepeer.github.io/video-nft/modules/minter.html)
 which consists of 3 parts:
+
  - The `Uploader` to send files from the local context (e.g. picked by the user
    on a file picker) to the Livepeer API.
  - The `Api` component, used to interact with the Livepeer API or a proxy to it.
-   Abstracts the video-processing and IPFS exporting APIs for preparing the
-   video for an NFT.
+   Abstracts the video-processing and storing APIs for preparing the video for
+   an NFT.
  - The `Web3` component, used to actually mint the NFT given the IPFS URLs
    obtained from the `Api` component above.
 
@@ -169,7 +173,7 @@ The code below shows a simple example of how the whole flow would look like from
 the browser:
 
 ```js
-import { videonft } from '@livepeer/video-nft'
+import { videonft } from '@livepeer/video-nft';
 
 const apiOpts = {
   auth: { apiKey: 'your-api-key-here' },
@@ -209,7 +213,8 @@ async function mintNft() {
     description: 'My NFT description',
     traits: { 'my-custom-trait': 'my-custom-value' }
   };
-  const ipfs = await minter.api.exportToIPFS(asset.id, nftMetadata);
+  asset = await sdk.storeOnIPFS(asset.id, nftMetadata);
+  const ipfs = asset.storage?.ipfs?.status.addresses;
   const tx = await minter.web3.mintNft(ipfs.nftMetadataUrl);
   const nftInfo = await minter.web3.getMintedNftInfo(tx);
   console.log(`minted NFT on contract ${nftInfo.contractAddress} with ID ${nftInfo.tokenId}`);
@@ -243,11 +248,11 @@ import { createProxyMiddleware } from 'http-proxy-middleware';
 
 const app = express();
 const proxy = createProxyMiddleware({
-	target: 'https://livepeer.com',
-	changeOrigin: true,
-	headers: {
-		authorization: process.env.LP_API_KEY ?? ''
-	}
+  target: 'https://livepeer.com',
+  changeOrigin: true,
+  headers: {
+    authorization: process.env.LP_API_KEY ?? ''
+  }
 });
 
 app.get('/api/asset/:id', proxy);
@@ -255,6 +260,7 @@ app.get('/api/task/:id', proxy);
 app.post('/api/asset/request-upload', proxy);
 app.post('/api/asset/transcode', proxy);
 app.post('/api/asset/:id/export', proxy);
+app.patch('/api/asset/:id', proxy);
 
 app.listen(3000);
 ```
@@ -266,6 +272,7 @@ that) and changing the `endpoint` to where your backend is:
  - If your backend is running on the same domain as your frontend, you can
    actually omit the `endpoint` field as well and the client will default to the
    current origin:
+
 ```js
 const apiOpts = {};
 const minter = new videonft.minter.FullMinter(apiOpts, { ethereum, chainId });
@@ -275,6 +282,7 @@ const minter = new videonft.minter.FullMinter(apiOpts, { ethereum, chainId });
    the cross-origin request. You can use a package like
    [cors](https://www.npmjs.com/package/cors) for that. On the frontend, you
    only need to add the domain (with the scheme) to the `endpoint` field:
+
 ```js
 const apiOpts = { endpoint: 'https://backend.example.com' };
 const minter = new videonft.minter.FullMinter(apiOpts, { ethereum, chainId });
