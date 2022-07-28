@@ -29,19 +29,8 @@ export interface Asset {
 	objectStoreId?: string;
 	storage?: {
 		ipfs?: {
-			spec?: {
-				/**
-				 * Name of the NFT metadata template to export. 'player' will embed the Livepeer Player on the NFT while 'file' will reference only the immutable MP4 files.
-				 */
-				nftMetadataTemplate?: 'player' | 'file';
-				/**
-				 * Additional data to add to the NFT metadata exported to IPFS. Will be deep merged with the default metadata exported.
-				 */
-				nftMetadata?: {
-					[k: string]: unknown;
-				};
-			};
-			status?: {
+			spec: AssetIPFSSpec;
+			status: {
 				/**
 				 * Phase of the asset storage
 				 */
@@ -195,6 +184,19 @@ export interface Asset {
 	sourceAssetId?: string;
 }
 
+export interface AssetIPFSSpec {
+	/**
+	 * Name of the NFT metadata template to export. 'player' will embed the Livepeer Player on the NFT while 'file' will reference only the immutable MP4 files.
+	 */
+	nftMetadataTemplate?: 'player' | 'file';
+	/**
+	 * Additional data to add to the NFT metadata exported to IPFS. Will be deep merged with the default metadata exported.
+	 */
+	nftMetadata?: {
+		[k: string]: unknown;
+	};
+}
+
 export interface AssetIPFSAddresses {
 	/**
 	 * IPFS CID of the exported video file
@@ -220,6 +222,29 @@ export interface AssetIPFSAddresses {
 	 * URL to access metadata file via HTTP through an IPFS gateway
 	 */
 	nftMetadataGatewayUrl: string;
+}
+
+export interface AssetPatchPayload {
+	/**
+	 * Name of the asset. This is not necessarily the filename, can be a custom name or title
+	 */
+	name?: Asset['name'];
+	/**
+	 * User input metadata associated with the asset
+	 */
+	meta?: Asset['meta'];
+	/**
+	 * Storage configuration for an asset. This field will be merged with the one
+	 * provided in the patch, so you can just include new entries or override
+	 * specific ones.
+	 */
+	storage?: {
+		/**
+		 * Set to `true` to make a default export to IPFS. `false` or `null` means
+		 * to unpin from IPFS, but is unsupported right now.
+		 */
+		ipfs?: null | boolean | { spec?: null | AssetIPFSSpec };
+	};
 }
 
 export interface Task {
@@ -286,7 +311,7 @@ export interface Task {
 					};
 			  }
 			| {
-					ipfs: {
+					ipfs: AssetIPFSSpec & {
 						/**
 						 * Custom credentials for the Piñata service. Must have either a JWT or an API key and an API secret.
 						 */
@@ -307,12 +332,6 @@ export interface Task {
 									 */
 									apiSecret: string;
 							  };
-						/**
-						 * Additional data to add to the NFT metadata exported to IPFS. Will be deep merged with the default metadata exported.
-						 */
-						nftMetadata?: {
-							[k: string]: unknown;
-						};
 					};
 			  };
 		/**

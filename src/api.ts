@@ -1,5 +1,5 @@
 import axios, { AxiosInstance, AxiosRequestConfig, Method } from 'axios';
-import { Asset, Task, FfmpegProfile } from './types/schema';
+import { Asset, Task, FfmpegProfile, AssetPatchPayload } from './types/schema';
 
 export * from './types/schema';
 
@@ -267,17 +267,15 @@ export class VodApi {
 	}
 
 	/**
-	 * Requests for an asset to be exported from the Livepeer API to any external
-	 * location, most commonly to IPFS.
-	 *
-	 * @remarks
-	 * Refer to
-	 * {@link https://livepeer.com/docs/api-reference/vod/export | the API reference}
-	 * for more info.
+	 * Requests for an asset to be exported from the Studio service to any
+	 * external location not managed by Studio itself. This may be a custom URL
+	 * like a pre-signed one from to your own S3 bucket or credentials for your
+	 * own IPFS provider account, for which currently only Piñata is supported.
 	 *
 	 * @param id - the ID of the asset to be exported.
 	 * @param params - the export task parameters. Set `ipfs` field to export to
-	 * IPFS and the optional `nftMetadata` sub-field to customize the NFT metadata.
+	 * IPFS and the optional `nftMetadata` sub-field to customize the NFT
+	 * metadata.
 	 *
 	 * @returns the export `task` object that can be used to track progress and
 	 * wait for the output (check {@link getTask}).
@@ -288,6 +286,25 @@ export class VodApi {
 			`/api/asset/${id}/export`,
 			params
 		);
+	}
+
+	/**
+	 * Patches an asset definition. This can update only metadata of the asset
+	 * like the `name` or `meta` fields but it can also update the storage
+	 * configuration for a given asset. If you want to save the asset in custom
+	 * storages like IPFS, you can do so by setting the `storage` field
+	 * appropriately.
+	 *
+	 * @param id - the ID of the asset to be patched.
+	 * @param patch - the patch payload. Set the `ipfs` field to export to IPFS
+	 * and the optional `nftMetadata` field in its `spec` to customize the NFT
+	 * metadata.
+	 *
+	 * @returns the updated `asset` object. If you updated `storage`, check the
+	 * corresponding `status.tasks` to track progress (check {@link getTask}).
+	 */
+	patchAsset(id: string, patch: AssetPatchPayload) {
+		return this.makeRequest<Asset>('patch', `/api/asset/${id}`, patch);
 	}
 
 	private makeRequest = <T>(method: Method, url: string, data?: any) =>
