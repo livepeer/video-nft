@@ -10,7 +10,7 @@ export interface Asset {
 	/**
 	 * Type of the asset.
 	 */
-	type?: 'video' | 'audio';
+	type?: 'video';
 	/**
 	 * Used to form playback URL and storage folder
 	 */
@@ -24,24 +24,50 @@ export interface Asset {
 	 */
 	downloadUrl?: string;
 	/**
-	 * owner of the asset
-	 */
-	userId?: string;
-	/**
-	 * Set to true when the asset is deleted
-	 */
-	deleted?: boolean;
-	/**
 	 * Object store ID where the asset is stored
 	 */
 	objectStoreId?: string;
 	storage?: {
 		ipfs?: {
-			/**
-			 * Additional data to add to the NFT metadata exported to IPFS. Will be deep merged with the default metadata exported.
-			 */
-			nftMetadata?: {
-				[k: string]: unknown;
+			spec?: {
+				/**
+				 * Name of the NFT metadata template to export. 'player' will embed the Livepeer Player on the NFT while 'file' will reference only the immutable MP4 files.
+				 */
+				nftMetadataTemplate?: 'player' | 'file';
+				/**
+				 * Additional data to add to the NFT metadata exported to IPFS. Will be deep merged with the default metadata exported.
+				 */
+				nftMetadata?: {
+					[k: string]: unknown;
+				};
+			};
+			status?: {
+				/**
+				 * Phase of the asset storage
+				 */
+				phase: 'waiting' | 'ready' | 'failed' | 'reverted';
+				/**
+				 * Error message if the last storage changed failed.
+				 */
+				errorMessage?: string;
+				tasks: {
+					/**
+					 * ID of any currently running task that is exporting this asset to IPFS.
+					 */
+					pending?: string;
+					/**
+					 * ID of the last task to run successfully, that created the currently saved data.
+					 */
+					last?: string;
+					/**
+					 * ID of the last task to fail execution.
+					 */
+					failed?: string;
+				};
+				/**
+				 * Addresses of the asset in IPFS from the last successful task execution.
+				 */
+				addresses?: AssetIPFSAddresses;
 			};
 		};
 	};
@@ -61,50 +87,6 @@ export interface Asset {
 		 * Error message if the asset creation failed.
 		 */
 		errorMessage?: string;
-		storage?: {
-			ipfs?: {
-				taskIds: {
-					/**
-					 * ID of any currently running task that is exporting this asset to IPFS.
-					 */
-					pending?: string;
-					/**
-					 * ID of the last task to run successfully, that created the currently saved data.
-					 */
-					last?: string;
-					/**
-					 * ID of the last task to fail execution.
-					 */
-					failed?: string;
-				};
-				data?: {
-					/**
-					 * IPFS CID of the exported video file
-					 */
-					videoFileCid: string;
-					/**
-					 * URL for the file with the IPFS protocol
-					 */
-					videoFileUrl?: string;
-					/**
-					 * URL to access file via HTTP through an IPFS gateway
-					 */
-					videoFileGatewayUrl?: string;
-					/**
-					 * IPFS CID of the default metadata exported for the video
-					 */
-					nftMetadataCid?: string;
-					/**
-					 * URL for the metadata file with the IPFS protocol
-					 */
-					nftMetadataUrl?: string;
-					/**
-					 * URL to access metadata file via HTTP through an IPFS gateway
-					 */
-					nftMetadataGatewayUrl?: string;
-				};
-			};
-		};
 	};
 	/**
 	 * Name of the asset. This is not necessarily the filename, can be a custom name or title
@@ -213,7 +195,7 @@ export interface Asset {
 	sourceAssetId?: string;
 }
 
-export type ExportToIPFSOutput = {
+export interface AssetIPFSAddresses {
 	/**
 	 * IPFS CID of the exported video file
 	 */
@@ -238,17 +220,13 @@ export type ExportToIPFSOutput = {
 	 * URL to access metadata file via HTTP through an IPFS gateway
 	 */
 	nftMetadataGatewayUrl: string;
-};
+}
 
 export interface Task {
 	/**
 	 * Task ID
 	 */
 	id: string;
-	/**
-	 * User ID of the task owner
-	 */
-	userId?: string;
 	/**
 	 * Type of the task
 	 */
@@ -257,10 +235,6 @@ export interface Task {
 	 * Timestamp (in milliseconds) at which task was created
 	 */
 	createdAt?: number;
-	/**
-	 * Set to true when the task is deleted
-	 */
-	deleted?: boolean;
 	/**
 	 * ID of the input asset
 	 */
@@ -316,7 +290,7 @@ export interface Task {
 						/**
 						 * Custom credentials for the Piñata service. Must have either a JWT or an API key and an API secret.
 						 */
-						pinata?:
+						pinata:
 							| {
 									/**
 									 * Will be added to the Authorization header as a Bearer token.
@@ -392,7 +366,7 @@ export interface Task {
 		 * Output of the export task
 		 */
 		export?: {
-			ipfs?: ExportToIPFSOutput;
+			ipfs?: AssetIPFSAddresses;
 		};
 		transcode?: {
 			asset?: {
@@ -412,14 +386,6 @@ export interface Task {
 					 * URL to manually download the asset if desired
 					 */
 					downloadUrl?: string;
-					/**
-					 * owner of the asset
-					 */
-					userId?: string;
-					/**
-					 * Set to true when the asset is deleted
-					 */
-					deleted?: boolean;
 					/**
 					 * Object store ID where the asset is stored
 					 */
