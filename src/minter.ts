@@ -442,10 +442,11 @@ export class Api {
 	 * @param reportProgress A function that will be called periodically with the
 	 * progress of the export task.
 	 *
-	 * @returns The information about the files exported to IPFS. Use the
-	 * `nftMetadataUrl` field as the `tokenUri` for minting the NFT of the asset.
+	 * @returns The updated `asset` object, containing the IPFS addresses under
+	 * `storage.ipfs.status.addresses`. Use the `nftMetadataUrl` field as the
+	 * `tokenUri` for minting an NFT out of the asset.
 	 */
-	async exportToIPFS(
+	async storeOnIPFS(
 		assetId: string,
 		nftMetadata?: string | Record<string, any>,
 		reportProgress?: (progress: number) => void
@@ -453,12 +454,14 @@ export class Api {
 		if (typeof nftMetadata === 'string') {
 			nftMetadata = JSON.parse(nftMetadata) as Record<string, any>;
 		}
-		let { task } = await this.vod.exportAsset(assetId, {
-			ipfs: { nftMetadata }
+		let asset = await this.vod.patchAsset(assetId, {
+			storage: {
+				ipfs: { spec: { nftMetadata } }
+			}
 		});
-		task = await this.waitTask(task, reportProgress);
-		const ipfs = task.output?.export?.ipfs;
-		return ipfs as NonNullable<typeof ipfs>;
+		const tasks = asset?.storage?.ipfs?.status?.tasks;
+		await this.waitTask(tasks?.pending ?? '', reportProgress);
+		return await this.vod.getAsset(assetId);
 	}
 
 	/**
@@ -477,7 +480,13 @@ export class Api {
 	 * @returns The finished `Task` object also containing the task output. Check
 	 * the `output` field for the respective output depending on the task `type`.
 	 */
-	async waitTask(task: Task, reportProgress?: (progress: number) => void) {
+	async waitTask(
+		task: Task | string,
+		reportProgress?: (progress: number) => void
+	) {
+		if (typeof task === 'string') {
+			task = await this.vod.getTask(task);
+		}
 		let lastProgress = 0;
 		while (
 			task.status?.phase !== 'completed' &&
@@ -735,10 +744,8 @@ export class FullMinter {
 		if (!args.skipNormalize) {
 			asset = await this.api.nftNormalize(asset);
 		}
-		const { nftMetadataUrl } = await this.api.exportToIPFS(
-			asset.id,
-			args.nftMetadata
-		);
+		asset = await this.api.storeOnIPFS(asset.id, args.nftMetadata);
+		const { nftMetadataUrl } = asset.storage?.ipfs?.status.addresses ?? {};
 		const { contractAddress, to } = args?.mint ?? {};
 		const tx = await this.web3.mintNft(
 			nftMetadataUrl ?? '',

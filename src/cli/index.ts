@@ -19,11 +19,8 @@ async function videoNft() {
 	asset = await maybeTranscode(sdk, asset);
 
 	printStep('Starting export...');
-	let ipfs = await sdk.exportToIPFS(
-		asset.id,
-		args.nftMetadata,
-		printProgress
-	);
+	asset = await sdk.storeOnIPFS(asset.id, args.nftMetadata, printProgress);
+	const ipfs = asset.storage?.ipfs?.status.addresses;
 	console.log(
 		`Export successful! Result: \n${JSON.stringify(ipfs, null, 2)}`
 	);
