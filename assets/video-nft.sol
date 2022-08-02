@@ -12,7 +12,7 @@ import '@openzeppelin/contracts/utils/Counters.sol';
 
 interface IVideoNFT {
 	function mint(address owner, string memory tokenURI)
-		public
+		external
 		returns (uint256);
 
 	event Mint(
@@ -29,15 +29,9 @@ contract VideoNFT is ERC721URIStorage, IVideoNFT {
 
 	constructor() ERC721('Video NFT', 'VIDEO') {}
 
-	event Mint(
-		address indexed sender,
-		address indexed owner,
-		string tokenURI,
-		uint256 tokenId
-	);
-
 	function mint(address owner, string memory tokenURI)
 		public
+		override
 		returns (uint256)
 	{
 		require(
