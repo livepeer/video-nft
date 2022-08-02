@@ -459,7 +459,7 @@ export class Api {
 				ipfs: { spec: { nftMetadata } }
 			}
 		});
-		const tasks = asset?.storage?.ipfs?.status?.tasks;
+		const tasks = asset?.storage?.status?.tasks;
 		await this.waitTask(tasks?.pending ?? '', reportProgress);
 		return await this.vod.getAsset(assetId);
 	}
@@ -745,13 +745,9 @@ export class FullMinter {
 			asset = await this.api.nftNormalize(asset);
 		}
 		asset = await this.api.storeOnIPFS(asset.id, args.nftMetadata);
-		const { nftMetadataUrl } = asset.storage?.ipfs?.status.addresses ?? {};
+		const nftMetadataUrl = asset.storage?.ipfs?.nftMetadata?.url ?? '';
 		const { contractAddress, to } = args?.mint ?? {};
-		const tx = await this.web3.mintNft(
-			nftMetadataUrl ?? '',
-			contractAddress,
-			to
-		);
+		const tx = await this.web3.mintNft(nftMetadataUrl, contractAddress, to);
 		return await this.web3.getMintedNftInfo(tx);
 	}
 }

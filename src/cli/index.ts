@@ -20,14 +20,14 @@ async function videoNft() {
 
 	printStep('Starting export...');
 	asset = await sdk.storeOnIPFS(asset.id, args.nftMetadata, printProgress);
-	const ipfs = asset.storage?.ipfs?.status.addresses;
+	const ipfs = { ...asset.storage?.ipfs, spec: undefined };
 	console.log(
 		`Export successful! Result: \n${JSON.stringify(ipfs, null, 2)}`
 	);
 
 	printStep(
 		`Mint your NFT at:\n` +
-			`https://livepeer.com/mint-nft?tokenUri=${ipfs?.nftMetadataUrl}`
+			`https://livepeer.com/mint-nft?tokenUri=${ipfs?.nftMetadata?.url}`
 	);
 }
 

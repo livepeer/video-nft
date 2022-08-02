@@ -28,35 +28,32 @@ export interface Asset {
 	 */
 	objectStoreId?: string;
 	storage?: {
-		ipfs?: {
-			spec: AssetIPFSSpec;
-			status: {
+		ipfs?: Partial<IpfsFileInfo> & {
+			spec?: AssetIPFSSpec;
+			nftMetadata?: IpfsFileInfo;
+		};
+		status?: {
+			/**
+			 * Phase of the asset storage
+			 */
+			phase: 'waiting' | 'ready' | 'failed' | 'reverted';
+			/**
+			 * Error message if the last storage changed failed.
+			 */
+			errorMessage?: string;
+			tasks: {
 				/**
-				 * Phase of the asset storage
+				 * ID of any currently running task that is exporting this asset to IPFS.
 				 */
-				phase: 'waiting' | 'ready' | 'failed' | 'reverted';
+				pending?: string;
 				/**
-				 * Error message if the last storage changed failed.
+				 * ID of the last task to run successfully, that created the currently saved data.
 				 */
-				errorMessage?: string;
-				tasks: {
-					/**
-					 * ID of any currently running task that is exporting this asset to IPFS.
-					 */
-					pending?: string;
-					/**
-					 * ID of the last task to run successfully, that created the currently saved data.
-					 */
-					last?: string;
-					/**
-					 * ID of the last task to fail execution.
-					 */
-					failed?: string;
-				};
+				last?: string;
 				/**
-				 * Addresses of the asset in IPFS from the last successful task execution.
+				 * ID of the last task to fail execution.
 				 */
-				addresses?: AssetIPFSAddresses;
+				failed?: string;
 			};
 		};
 	};
@@ -197,31 +194,19 @@ export interface AssetIPFSSpec {
 	};
 }
 
-export interface AssetIPFSAddresses {
+export interface IpfsFileInfo {
 	/**
-	 * IPFS CID of the exported video file
+	 * CID of the file on IPFS
 	 */
-	videoFileCid: string;
+	cid: string;
 	/**
-	 * URL for the file with the IPFS protocol
+	 * URL with IPFS scheme for the file
 	 */
-	videoFileUrl: string;
+	url?: string;
 	/**
 	 * URL to access file via HTTP through an IPFS gateway
 	 */
-	videoFileGatewayUrl: string;
-	/**
-	 * IPFS CID of the default metadata exported for the video
-	 */
-	nftMetadataCid: string;
-	/**
-	 * URL for the metadata file with the IPFS protocol
-	 */
-	nftMetadataUrl: string;
-	/**
-	 * URL to access metadata file via HTTP through an IPFS gateway
-	 */
-	nftMetadataGatewayUrl: string;
+	gatewayUrl?: string;
 }
 
 export interface AssetPatchPayload {
@@ -385,7 +370,32 @@ export interface Task {
 		 * Output of the export task
 		 */
 		export?: {
-			ipfs?: AssetIPFSAddresses;
+			ipfs?: {
+				/**
+				 * IPFS CID of the exported video file
+				 */
+				videoFileCid: string;
+				/**
+				 * URL for the file with the IPFS protocol
+				 */
+				videoFileUrl: string;
+				/**
+				 * URL to access file via HTTP through an IPFS gateway
+				 */
+				videoFileGatewayUrl: string;
+				/**
+				 * IPFS CID of the default metadata exported for the video
+				 */
+				nftMetadataCid: string;
+				/**
+				 * URL for the metadata file with the IPFS protocol
+				 */
+				nftMetadataUrl: string;
+				/**
+				 * URL to access metadata file via HTTP through an IPFS gateway
+				 */
+				nftMetadataGatewayUrl: string;
+			};
 		};
 		transcode?: {
 			asset?: {
