@@ -1,5 +1,6 @@
 import axios, { AxiosInstance, AxiosRequestConfig, Method } from 'axios';
 import { Asset, Task, FfmpegProfile } from './types/schema';
+import progress from 'progress-stream';
 
 export * from './types/schema';
 
@@ -44,6 +45,10 @@ async function makeRequest<T>(
 			`Request to ${url} failed (${status} ${statusText}): ${msg}`
 		);
 	}
+}
+
+function isFile(content: File | NodeJS.ReadableStream): content is File {
+	return typeof File !== 'undefined' && content instanceof File;
 }
 
 type ExportTaskParams = NonNullable<Task['params']>['export'];
@@ -225,10 +230,16 @@ export class VodApi {
 		reportProgress?: (progress: number) => void,
 		mimeType?: string
 	): Promise<void> {
-		const defaultMimeType =
-			typeof File !== 'undefined' && content instanceof File
-				? content.type
-				: 'application/octet-stream';
+		const defaultMimeType = isFile(content)
+			? content.type
+			: 'application/octet-stream';
+		if (!isFile(content)) {
+			const ps = progress({ time: 500 });
+			content = content.pipe(ps);
+			ps.on('progress', function (progress) {
+				console.log('upload progress', new Date(), progress);
+			});
+		}
 		return makeRequest(fileUploadClient, 'put', url, content, {
 			headers: {
 				contentType: mimeType || defaultMimeType

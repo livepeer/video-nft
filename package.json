@@ -55,6 +55,7 @@
 		"browser-fs-access": "^0.25.0",
 		"ethers": "^5.6.1",
 		"inquirer": "^8.2.0",
+		"progress-stream": "^2.0.0",
 		"yargs": "^17.3.1"
 	},
 	"devDependencies": {
@@ -64,6 +65,7 @@
 		"@types/axios": "^0.14.0",
 		"@types/inquirer": "^8.2.0",
 		"@types/node": "^17.0.18",
+		"@types/progress-stream": "^2.0.2",
 		"@types/rollup": "^0.54.0",
 		"@types/yargs": "^17.0.8",
 		"@typescript-eslint/eslint-plugin": "^5.4.0",
